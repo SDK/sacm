@@ -19,6 +19,8 @@
 *.rar
 *.tar
 *.zip
+*.bin
+*.tgz
  
 # Logs and databases #
 ######################
@@ -37,4 +39,4 @@ ehthumbs.db
 Thumbs.db
 
 .idea/
-
+*.xml
