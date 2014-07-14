@@ -21,7 +21,7 @@ for i in asdmList:
     if '/X0/X0/' in i[3]:
         FlagError['EmptyUID'] = True
 
-mainXML = open('uid___A002_X837c61_Xffd/Main.xml','r')
+mainXML = open('uid___A002_X837c61_Xffd/Main.xml', 'r')
 main = minidom.parse(mainXML)
 mainList = list()
 
@@ -45,7 +45,7 @@ for i in mainList:
         FlagError['NullStateID'] = True
 
 
-scanXML = open('uid___A002_X837c61_Xffd/Scan.xml','r')
+scanXML = open('uid___A002_X837c61_Xffd/Scan.xml', 'r')
 scan = minidom.parse(scanXML)
 scanList = list()
 rows = scan.getElementsByTagName('row')
@@ -61,6 +61,13 @@ for i in rows:
                      i.getElementsByTagName('numField')[0].firstChild.data,
                      i.getElementsByTagName('fieldName')[0].firstChild.data,
                      i.getElementsByTagName('sourceName')[0].firstChild.data ))
+
+
+
+
+
+
+
 
 
 
