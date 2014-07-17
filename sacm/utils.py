@@ -1,5 +1,6 @@
 __author__ = 'sdk'
 from time import strftime, gmtime
+import datetime
 from xml.dom import minidom
 import numpy as np
 
@@ -23,7 +24,17 @@ def gtm(t=None):
     :param t:
     """
     st = t-3506716800000000000L
-    return st/1000000L
+    return st/1000000000L
+
+
+def gtm2(t=None):
+    """
+    Convert a time value (as used by ASDM, i.e. MJD in nanoseconds) into a FITS type string.
+    :param t:
+    """
+    st = t-3506716800000000000L
+    unix = st/1000000000L
+    return datetime.datetime.fromtimestamp(unix).replace(microsecond=((unix % 1000L)*1000))
 
 
 def RadianTo(num=None, unit=None):
