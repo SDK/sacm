@@ -4,7 +4,9 @@ from sacm import *
 from xml.dom import minidom
 import pandas as pd
 
-diskuid = 'uid___A002_X86dcae_X15d'
+diskuid = 'uid___A002_X837c61_Xffd'
+#diskuid = 'uid___A002_X86dcae_X15d'
+#diskuid = 'uid___A002_X86dcae_X416'
 
 asdmXML = open(diskuid+'/ASDM.xml', 'r')
 
@@ -170,4 +172,30 @@ atmscans = sc[sc['intent_1'].isin(['CALIBRATE_ATMOSPHERE'])]
 
 df = pd.merge(atmscans[['scanNumber','intent_1']], mn[['scanNumber','subscanNumber','stateId']], on='scanNumber')
 
-bla.groupby('scanNumber').stateId.nunique()
+df.groupby('scanNumber').stateId.nunique()
+
+syscalXML = open(diskuid+'/SysCal.xml', 'r')
+syscal = minidom.parse(syscalXML)
+syscalList = list()
+rows = syscal.getElementsByTagName('row')
+
+for i in rows:
+    syscalList.append((
+        i.getElementsByTagName('timeInterval')[0].firstChild.data,
+        i.getElementsByTagName('numReceptor')[0].firstChild.data,
+        i.getElementsByTagName('numChan')[0].firstChild.data,
+        i.getElementsByTagName('tcalFlag')[0].firstChild.data,
+        i.getElementsByTagName('tcalSpectrum')[0].firstChild.data,
+        i.getElementsByTagName('trxFlag')[0].firstChild.data,
+        i.getElementsByTagName('trxSpectrum')[0].firstChild.data,
+        i.getElementsByTagName('tskyFlag')[0].firstChild.data,
+        i.getElementsByTagName('tskySpectrum')[0].firstChild.data,
+        i.getElementsByTagName('tsysFlag')[0].firstChild.data,
+        i.getElementsByTagName('tsysSpectrum')[0].firstChild.data,
+        i.getElementsByTagName('antennaId')[0].firstChild.data,
+        i.getElementsByTagName('feedId')[0].firstChild.data,
+        i.getElementsByTagName('spectralWindowId')[0].firstChild.data ))
+
+scal = pd.DataFrame(syscalList, columns=['timeInterval','numReceptor','numChan','tcalFlag','tcalSpectrum','trxFlag',
+                                         'trxSpectrum','tskyFlag','tskySpectrum','tsysFlag','tsysSpectrum','antennaId',
+                                         'feedId','spectralWindowId'])
