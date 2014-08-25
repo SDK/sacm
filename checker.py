@@ -18,7 +18,7 @@ def getASDM(uid=None):
                              i.getElementsByTagName('NumberRows')[0].firstChild.data,
                              str(i.getElementsByTagName('Entity')[0].getAttribute('entityTypeName')),
                              str(i.getElementsByTagName('Entity')[0].getAttribute('entityId'))))
-    return pd.DataFrame(asdmList, columns=['table', 'numrows', 'typename', 'uid'])
+    return asdmList, pd.DataFrame(asdmList, columns=['table', 'numrows', 'typename', 'uid'])
 
 def getMain(uid=None):
     mainXML = GetXML(uid,'Main')
