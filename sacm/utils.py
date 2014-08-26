@@ -60,7 +60,7 @@ def gtm2(t=None):
     """
     st = t-3506716800000000000L
     unix = st/1000000000L
-    return datetime.datetime.fromtimestamp(unix).replace(microsecond=((unix % 1000L)*1000))
+    return datetime.datetime.fromtimestamp(unix)
 
 
 def RadianTo(num=None, unit=None):
