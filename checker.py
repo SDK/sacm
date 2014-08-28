@@ -126,7 +126,7 @@ def getSpectralWindow(uid=None):
                         i.getElementsByTagName('name')[0].firstChild.data,
                         #i.getElementsByTagName('resolutionArray')[0].firstChild.data,
                         i.getElementsByTagName('assocNature')[0].firstChild.data,
-                        i.getElementsByTagName('assocSpectralWindowId')[0].firstChild.data))
+                        i.getElementsByTagName('assocSpectralWindowId')[0].firstChild.data.strip()))
     return pd.DataFrame(spwList, columns=['spectralWindowId', 'basebandName', 'netSideband', 'numChan',
                                          'refFreq', 'sidebandProcessingMode', 'totBandwidth', 'name',
                                          'assocNature', 'assocSpectralWindowId'])
@@ -168,9 +168,9 @@ def getSysCal(uid=None):
             i.getElementsByTagName('tskySpectrum')[0].firstChild.data,
             i.getElementsByTagName('tsysFlag')[0].firstChild.data,
             i.getElementsByTagName('tsysSpectrum')[0].firstChild.data,
-            i.getElementsByTagName('antennaId')[0].firstChild.data,
+            i.getElementsByTagName('antennaId')[0].firstChild.data.strip(),
             i.getElementsByTagName('feedId')[0].firstChild.data,
-            i.getElementsByTagName('spectralWindowId')[0].firstChild.data ))
+            i.getElementsByTagName('spectralWindowId')[0].firstChild.data.strip() ))
     return pd.DataFrame(syscalList, columns=['timeInterval','numReceptor','numChan','tcalFlag','tcalSpectrum','trxFlag',
                                              'trxSpectrum','tskyFlag','tskySpectrum','tsysFlag','tsysSpectrum','antennaId',
                                              'feedId','spectralWindowId'])
