@@ -88,24 +88,14 @@ def getSource(uid=None):
     rows = source.getElementsByTagName('row')
     #there are missing fields in some rows for the Source table.
     for i in rows:
-        try:
-            sourceList.append((int(i.getElementsByTagName('sourceId')[0].firstChild.data),
-                               i.getElementsByTagName('timeInterval')[0].firstChild.data,
-                               i.getElementsByTagName('direction')[0].firstChild.data,
-                               i.getElementsByTagName('directionCode')[0].firstChild.data,
-                               i.getElementsByTagName('sourceName')[0].firstChild.data,
-                               i.getElementsByTagName('spectralWindowId')[0].firstChild.data,
-                               i.getElementsByTagName('frequency')[0].firstChild.data,
-                               arrayParser(i.getElementsByTagName('flux')[0].firstChild.data,2),
-                               int(i.getElementsByTagName('numStokes')[0].firstChild.data)))
-        except IndexError as e:
-            sourceList.append((int(i.getElementsByTagName('sourceId')[0].firstChild.data),
-                               i.getElementsByTagName('timeInterval')[0].firstChild.data,
-                               i.getElementsByTagName('direction')[0].firstChild.data,
-                               i.getElementsByTagName('directionCode')[0].firstChild.data,
-                               i.getElementsByTagName('sourceName')[0].firstChild.data,
-                               i.getElementsByTagName('spectralWindowId')[0].firstChild.data))
-    return pd.DataFrame(sourceList)
+        sourceList.append((int(i.getElementsByTagName('sourceId')[0].firstChild.data),
+                           i.getElementsByTagName('timeInterval')[0].firstChild.data,
+                           i.getElementsByTagName('direction')[0].firstChild.data,
+                           i.getElementsByTagName('directionCode')[0].firstChild.data,
+                           i.getElementsByTagName('sourceName')[0].firstChild.data,
+                           i.getElementsByTagName('spectralWindowId')[0].firstChild.data))
+    return pd.DataFrame(sourceList,columns=['sourceId','timeInterval','direction','directionCode','sourceName',
+                                            'spectralWindowId'])
 
 def getSpectralWindow(uid=None):
     spwXML = GetXML(uid,'SpectralWindow')
@@ -174,4 +164,5 @@ def getSysCal(uid=None):
     return pd.DataFrame(syscalList, columns=['timeInterval','numReceptor','numChan','tcalFlag','tcalSpectrum','trxFlag',
                                              'trxSpectrum','tskyFlag','tskySpectrum','tsysFlag','tsysSpectrum','antennaId',
                                              'feedId','spectralWindowId'])
+
 

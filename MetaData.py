@@ -55,3 +55,12 @@ class asdmCheck:
             if nT != nTS:
                 return False
         return True
+
+    def iscsv2555(self):
+        source = getSource(self.asdmDict['Source'])
+        field = getField(self.asdmDict['Field'])
+        src = source[['sourceId', 'sourceName']]
+        src = src.drop_duplicates()
+        fld = field[['sourceId', 'fieldName']]
+        fld = fld.drop_duplicates()
+
