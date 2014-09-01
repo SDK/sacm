@@ -60,7 +60,11 @@ class asdmCheck:
         source = getSource(self.asdmDict['Source'])
         field = getField(self.asdmDict['Field'])
         src = source[['sourceId', 'sourceName']]
+        src['sourceName'] = src.apply(lambda x: x['sourceName'].strip(), axis = 1)
         src = src.drop_duplicates()
         fld = field[['sourceId', 'fieldName']]
+        fld['fieldName'] = fld.apply(lambda x: x['fieldName'].strip(), axis = 1)
         fld = fld.drop_duplicates()
+        a = pd.merge(src,fld,left_on = 'sourceId',right_on='sourceId',how='outer')
+        
 
