@@ -166,3 +166,129 @@ def getSysCal(uid=None):
                                              'feedId','spectralWindowId'])
 
 
+
+def getSBData(sbuid=None):
+    schedXML = GetXML(sbuid, 'SchedBlock')
+    sched = minidom.parseString(schedXML)
+
+    schedList = list()
+    rowsBL = sched.getElementsByTagName('sbl:BLSpectralWindow')
+    rowsACA = sched.getElementsByTagName('sbl:ACASpectralWindow')
+    rows = rowsBL if len(rowsBL) > len(rowsACA) else rowsACA
+    for i in rows:
+        brother = i.parentNode.getElementsByTagName('sbl:BaseBandSpecificationRef')
+        parent = i.parentNode.parentNode.parentNode
+        schedList.append((
+            parent.getAttribute('entityPartId'),
+            parent.getAttribute('switchingType'),
+            #parent.getAttribute('receiverType'),
+            parent.getElementsByTagName('sbl:name')[0].firstChild.data,
+            brother[0].getAttribute('entityId'),
+            brother[0].getAttribute('partId'),
+            #brother[0].getAttribute('entityTypeName'),
+            #i.getAttribute('sideBand'),
+            #i.getAttribute('windowFunction'),
+            i.getAttribute('polnProducts'),
+            #i.getAttribute('correlationBits'),
+            i.getElementsByTagName('sbl:centerFrequency')[0].firstChild.data,
+            i.getElementsByTagName('sbl:centerFrequency')[0].getAttribute('unit'),
+            #i.getElementsByTagName('sbl:spectralAveragingFactor')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:name')[0].firstChild.data,
+            i.getElementsByTagName('sbl:effectiveBandwidth')[0].firstChild.data,
+            i.getElementsByTagName('sbl:effectiveBandwidth')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:effectiveNumberOfChannels')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:useThisSpectralWindow')[0].firstChild.data,
+            i.getElementsByTagName('sbl:ChannelAverageRegion')[0].getElementsByTagName('sbl:startChannel')[0].firstChild.data,
+            i.getElementsByTagName('sbl:ChannelAverageRegion')[0].getElementsByTagName('sbl:numberChannels')[0].firstChild.data,
+
+        ))
+
+    specs = pd.DataFrame(schedList)
+
+    rows = sched.getElementsByTagName('sbl:BaseBandSpecification')
+    bbList = list()
+
+    for i in rows:
+        parent = i.parentNode
+        bbList.append((
+            parent.getAttribute('receiverBand'),
+            parent.getAttribute('dopplerReference'),
+            parent.getElementsByTagName('sbl:restFrequency')[0].firstChild.data,
+            parent.getElementsByTagName('sbl:restFrequency')[0].getAttribute('unit'),
+            parent.getElementsByTagName('sbl:frequencySwitching')[0].firstChild.data,
+            parent.getElementsByTagName('sbl:lO2Frequency')[0].firstChild.data,
+            parent.getElementsByTagName('sbl:lO2Frequency')[0].getAttribute('unit'),
+            #parent.getElementsByTagName('sbl:weighting')[0].firstChild.data,
+            #parent.getElementsByTagName('sbl:useUSB')[0].firstChild.data,
+            #parent.getElementsByTagName('sbl:use12GHzFilter')[0].firstChild.data,
+            #parent.getElementsByTagName('sbl:imageCenterFrequency')[0].firstChild.data,
+            #parent.getElementsByTagName('sbl:imageCenterFrequency')[0].getAttribute('unit'),
+            i.getAttribute('entityPartId'),
+            i.getAttribute('baseBandName'),
+            #i.getAttribute('sideBandPreference'),
+            i.getElementsByTagName('sbl:centerFrequency')[0].firstChild.data,
+            i.getElementsByTagName('sbl:lO2Frequency')[0].firstChild.data,
+            i.getElementsByTagName('sbl:lO2Frequency')[0].getAttribute('unit'),
+            #i.getElementsByTagName('sbl:weighting')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:useUSB')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:use12GHzFilter')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:imageCenterFrequency')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:imageCenterFrequency')[0].getAttribute('unit')
+        ))
+
+
+    bb = pd.DataFrame(bbList)
+    targetList = list()
+    rows = sched.getElementsByTagName('sbl:Target')
+    for i in rows:
+        targetList.append((
+            #i.getAttribute('entityPartId'),
+            i.getElementsByTagName('sbl:AbstractInstrumentSpecRef')[0].getAttribute('partId'),
+            #i.getElementsByTagName('sbl:FieldSourceRef')[0].getAttribute('partId'),
+            i.getElementsByTagName('sbl:ObservingParametersRef')[0].getAttribute('partId'),
+        ))
+
+    target = pd.DataFrame(targetList)
+
+
+    rows = sched.getElementsByTagName('sbl:ScienceParameters')
+    scienceList = list()
+    for i in rows:
+        scienceList.append((
+            i.getAttribute('entityPartId'),
+            i.getElementsByTagName('sbl:name')[0].firstChild.data,
+            i.getElementsByTagName('sbl:representativeBandwidth')[0].firstChild.data,
+            i.getElementsByTagName('sbl:representativeBandwidth')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:representativeFrequency')[0].firstChild.data,
+            i.getElementsByTagName('sbl:representativeFrequency')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:sensitivityGoal')[0].firstChild.data,
+            i.getElementsByTagName('sbl:sensitivityGoal')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:integrationTime')[0].firstChild.data,
+            i.getElementsByTagName('sbl:integrationTime')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:subScanDuration')[0].firstChild.data,
+            i.getElementsByTagName('sbl:subScanDuration')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:forceAtmCal')[0].firstChild.data
+        ))
+
+    science = pd.DataFrame(scienceList)
+
+    rows = sched.getElementsByTagName('sbl:PhaseCalParameters')
+    phaseList = list()
+    for i in rows:
+        phaseList.append((
+            i.getAttribute('entityPartId'),
+            #i.getElementsByTagName('sbl:name')[0].firstChild.data,
+            i.getElementsByTagName('sbl:cycleTime')[0].firstChild.data,
+            i.getElementsByTagName('sbl:cycleTime')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:defaultIntegrationTime')[0].firstChild.data,
+            i.getElementsByTagName('sbl:defaultIntegrationTime')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:subScanDuration')[0].firstChild.data,
+            i.getElementsByTagName('sbl:subScanDuration')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:forceAtmCal')[0].firstChild.data,
+            i.getElementsByTagName('sbl:forceExecution')[0].firstChild.data
+        ))
+
+    phase = pd.DataFrame(phaseList)
+    return (bb,specs,target,phase,science)
+
+

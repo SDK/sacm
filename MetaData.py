@@ -66,5 +66,5 @@ class asdmCheck:
         fld['fieldName'] = fld.apply(lambda x: x['fieldName'].strip(), axis = 1)
         fld = fld.drop_duplicates()
         a = pd.merge(src,fld,left_on = 'sourceId',right_on='sourceId',how='outer')
-        
+
 
