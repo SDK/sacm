@@ -6,6 +6,7 @@ import pandas as pd
 
 asdmUID = ''
 
+
 def getASDM(uid=None):
     asdmXML = GetXML(uid,'ASDM')
     asdm = minidom.parseString(asdmXML)
@@ -19,6 +20,7 @@ def getASDM(uid=None):
                              str(i.getElementsByTagName('Entity')[0].getAttribute('entityTypeName')),
                              str(i.getElementsByTagName('Entity')[0].getAttribute('entityId'))))
     return asdmList, pd.DataFrame(asdmList, columns=['table', 'numrows', 'typename', 'uid'])
+
 
 def getMain(uid=None):
     mainXML = GetXML(uid,'Main')
@@ -41,6 +43,7 @@ def getMain(uid=None):
     return pd.DataFrame(mainList, columns=['time', 'timeSampling', 'interval', 'scanNumber',
                                          'subscanNumber', 'dataSize', 'dataUID', 'fieldId', 'stateId'])
 
+
 def getScan(uid=None):
     scanXML = GetXML(uid,'Scan')
     scan = minidom.parseString(scanXML)
@@ -60,6 +63,7 @@ def getScan(uid=None):
 
     return pd.DataFrame(scanList, columns=['scanNumber', 'startTime', 'endTime', 'numSubscan',
                                          'scanIntent', 'calDataType', 'numField', 'fieldName', 'sourceName'])
+
 
 def getSubScan(uid=None):
     subscanXML = GetXML(uid,'Subscan')
@@ -81,6 +85,7 @@ def getSubScan(uid=None):
     return pd.DataFrame(subscanList, columns=['scanNumber','subscanNumber','startTime','endTime','fieldName',
                                               'subscanIntent','subscanMode'])
 
+
 def getSource(uid=None):
     sourceXML = GetXML(uid,'Source')
     source = minidom.parseString(sourceXML)
@@ -96,6 +101,7 @@ def getSource(uid=None):
                            i.getElementsByTagName('spectralWindowId')[0].firstChild.data))
     return pd.DataFrame(sourceList,columns=['sourceId','timeInterval','direction','directionCode','sourceName',
                                             'spectralWindowId'])
+
 
 def getSpectralWindow(uid=None):
     spwXML = GetXML(uid,'SpectralWindow')
@@ -120,6 +126,7 @@ def getSpectralWindow(uid=None):
     return pd.DataFrame(spwList, columns=['spectralWindowId', 'basebandName', 'netSideband', 'numChan',
                                          'refFreq', 'sidebandProcessingMode', 'totBandwidth', 'name',
                                          'assocNature', 'assocSpectralWindowId'])
+
 
 def getField(uid=None):
     fieldXML = GetXML(uid,'Field')
@@ -164,7 +171,6 @@ def getSysCal(uid=None):
     return pd.DataFrame(syscalList, columns=['timeInterval','numReceptor','numChan','tcalFlag','tcalSpectrum','trxFlag',
                                              'trxSpectrum','tskyFlag','tskySpectrum','tsysFlag','tsysSpectrum','antennaId',
                                              'feedId','spectralWindowId'])
-
 
 
 def getSBData(sbuid=None):
