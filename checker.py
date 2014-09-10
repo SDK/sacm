@@ -248,13 +248,13 @@ def getSBData(sbuid=None):
     rows = sched.getElementsByTagName('sbl:Target')
     for i in rows:
         targetList.append((
-            #i.getAttribute('entityPartId'),
+            i.getAttribute('entityPartId'),
             i.getElementsByTagName('sbl:AbstractInstrumentSpecRef')[0].getAttribute('partId'),
-            #i.getElementsByTagName('sbl:FieldSourceRef')[0].getAttribute('partId'),
+            i.getElementsByTagName('sbl:FieldSourceRef')[0].getAttribute('partId'),
             i.getElementsByTagName('sbl:ObservingParametersRef')[0].getAttribute('partId'),
         ))
 
-    target = pd.DataFrame(targetList)
+    target = pd.DataFrame(targetList, columns=['entityPartId','InstrumentSpec','FieldSource','ObsParameter'])
 
 
     rows = sched.getElementsByTagName('sbl:ScienceParameters')
@@ -295,6 +295,19 @@ def getSBData(sbuid=None):
         ))
 
     phase = pd.DataFrame(phaseList)
-    return (bb,specs,target,phase,science)
+
+    rows = sched.getElementsByTagName('sbl:FieldSource')
+    fieldList = list()
+    for i in rows:
+        fieldList.append((
+            i.getAttribute('entityPartId'),
+            i.getAttribute('solarSystemObject'),
+            i.getElementsByTagName('sbl:sourceName')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:sourceEphemeris')[0].firstChild.data,
+            i.getElementsByTagName('sbl:name')[0].firstChild.data,
+        ))
+
+    field = pd.DataFrame(fieldList)
+    return (bb,specs,target,phase,science,field)
 
 

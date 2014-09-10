@@ -60,11 +60,16 @@ class asdmCheck:
         source = getSource(self.asdmDict['Source'])
         field = getField(self.asdmDict['Field'])
         src = source[['sourceId', 'sourceName']]
-        src['sourceName'] = src.apply(lambda x: x['sourceName'].strip(), axis = 1)
+        src['sourceName1'] = src.apply(lambda x: x['sourceName'].strip(), axis = 1)
         src = src.drop_duplicates()
         fld = field[['sourceId', 'fieldName']]
-        fld['fieldName'] = fld.apply(lambda x: x['fieldName'].strip(), axis = 1)
+        fld['fieldName1'] = fld.apply(lambda x: x['fieldName'].strip(), axis = 1)
         fld = fld.drop_duplicates()
         a = pd.merge(src,fld,left_on = 'sourceId',right_on='sourceId',how='outer')
+        a['csv2555'] = a.apply(lambda x: True if x['sourceName1'] == x['fieldName1'] else False, axis = 1)
+        if a['csv2555'].nunique() == 1 and a['csv2555'].unique()[0] is True:
+            return False
+        else:
+            return (True,a)
 
 
