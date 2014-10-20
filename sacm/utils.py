@@ -4,7 +4,7 @@ import datetime
 from xml.dom import minidom
 import numpy as np
 import cx_Oracle
-from password import databaseSCO
+from password import databaseSCO as database
 import pandas as pd
 
 tables = {"ASDM": "XML_ASDM_ENTITIES", "Main": "XML_MAINTABLE_ENTITIES",
@@ -133,7 +133,7 @@ def GetXML(archiveUID=None,table=None):
     sqlXML = "select XMLType.GetClobVal(xml) from ALMA.XXXXYYY where archive_uid='ZZZZCCCC' "
     sqlXML = sqlXML.replace('XXXXYYY',tables[table]).replace('ZZZZCCCC',archiveUID)
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursorXML = orcl.cursor()
         cursorXML.execute(sqlXML)
         XMLTable = cursorXML.fetchone()
@@ -153,7 +153,7 @@ def getProjectUID(projectCode=None):
     sql = "select prj_archive_uid from ALMA.BMMV_OBSPROJECT where prj_code = 'XXXYYY'"
     sql = sql.replace('XXXYYY',projectCode)
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         data = cursor.fetchall()
@@ -166,7 +166,7 @@ def getProjectUID(projectCode=None):
 def getSBMOUS():
     sql = "select DOMAIN_ENTITY_ID, PARENT_OBS_UNIT_SET_STATUS_ID from ALMA.SCHED_BLOCK_STATUS"
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         data = cursor.fetchall()
@@ -181,7 +181,7 @@ def getSBMOUS():
 def getSBNames():
     sql = "select archive_uid, sb_name from ALMA.BMMV_SCHEDBLOCK"
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         data = cursor.fetchall()
@@ -209,7 +209,7 @@ def getProjectCodes(cycle=2):
 
     sql = sql.replace('XXXYYYZZZ',cycle_code[int(cycle)])
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         data = cursor.fetchall()
@@ -252,7 +252,7 @@ def getSBs(prj_uid=None):
         ORDER BY 1 ASC'''
     sql = sql.replace('PPPRRRJJJ', prj_uid)
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         sb = cursor.fetchall()
@@ -293,7 +293,7 @@ AND t2.domain_entity_id = 'ZZZXXXYYY'
 ORDER BY 1 ASC'''
     sql = sql.replace('PPPRRRJJJ', prj_uid).replace('ZZZXXXYYY', partid)
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         sb = cursor.fetchall()
@@ -323,7 +323,7 @@ def is_spectralscan(prj_uid=None):
         order by al1.timestamp desc'''
     sql = sql.replace('XXXXYYYY', prj_uid)
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         science_goals = cursor.fetchall()
@@ -368,7 +368,7 @@ def is_band89(prj_uid=None):
         ORDER BY 1 ASC'''
     sql = sql.replace('XXXXYYYYZZZZ',prj_uid)
     try:
-        orcl = cx_Oracle.connect(databaseSCO)
+        orcl = cx_Oracle.connect(database)
         cursor = orcl.cursor()
         cursor.execute(sql)
         sb = cursor.fetchall()
