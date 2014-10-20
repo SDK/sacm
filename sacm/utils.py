@@ -145,6 +145,11 @@ def GetXML(archiveUID=None,table=None):
 
 
 def getProjectUID(projectCode=None):
+    """
+
+    :param projectCode:
+    :return:
+    """
     sql = "select prj_archive_uid from ALMA.BMMV_OBSPROJECT where prj_code = 'XXXYYY'"
     sql = sql.replace('XXXYYY',projectCode)
     try:

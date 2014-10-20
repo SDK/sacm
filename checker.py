@@ -67,6 +67,7 @@ def getScan(uid=None):
 
 def getSubScan(uid=None):
     subscanXML = GetXML(uid,'Subscan')
+    #print subscanXML
     subscan = minidom.parseString(subscanXML)
     subscanList = list()
     rows = subscan.getElementsByTagName('row')

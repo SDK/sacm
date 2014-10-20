@@ -6,22 +6,29 @@ import math as mymath
 uid = 'uid://A002/X899169/X1179'
 
 
-class asdmCheck:
+class AsdmCheck:
+    """
+
+    """
     uid = ''
     asdmDict = dict()
 
+
     def setUID(self,uid=None):
         self.uid = uid
-        return True
-
-
-    def init(self):
         asdmList, asdm = getASDM(self.uid)
         for i in asdmList:
             self.asdmDict[i[0].strip()] = i[3].strip()
+        return True
+
 
 
     def isNullState(self):
+        """
+
+
+        :return:
+        """
         main = getMain(self.asdmDict['Main'])
         main['null'] = main.apply(lambda x: True if 'null' in x['stateId'] else False, axis = 1)
         if len(main['null'].unique()) > 1:
