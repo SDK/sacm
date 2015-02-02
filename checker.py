@@ -265,7 +265,6 @@ def getSBData(sbuid=None):
             #i.getElementsByTagName('sbl:imageCenterFrequency')[0].getAttribute('unit')
         ))
 
-
     bb = pd.DataFrame(bbList)
     targetList = list()
     rows = sched.getElementsByTagName('sbl:Target')
@@ -277,8 +276,7 @@ def getSBData(sbuid=None):
             i.getElementsByTagName('sbl:ObservingParametersRef')[0].getAttribute('partId'),
         ))
 
-    target = pd.DataFrame(targetList, columns=['entityPartId','InstrumentSpec','FieldSource','ObsParameter'])
-
+    target = pd.DataFrame(targetList, columns=['entityPartId', 'InstrumentSpec', 'FieldSource', 'ObsParameter'])
 
     rows = sched.getElementsByTagName('sbl:ScienceParameters')
     scienceList = list()
@@ -331,6 +329,6 @@ def getSBData(sbuid=None):
         ))
 
     field = pd.DataFrame(fieldList)
-    return (bb,specs,target,phase,science,field)
+    return bb,specs,target,phase,science,field
 
 
