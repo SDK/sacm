@@ -140,6 +140,7 @@ class AsdmCheck:
 
 
     def save(self):
+        #TODO do nothing if docheck is not run, plus some checks
         sql = "select * from public.metadata where asdm_uid ='"+self.uid+"'"
         pgcursor.execute(sql)
         row = pgcursor.fetchone()

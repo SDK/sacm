@@ -6,6 +6,7 @@ import numpy as np
 import cx_Oracle
 from password import databaseSCO as database
 import pandas as pd
+pd.options.mode.chained_assignment = None
 
 tables = {"ASDM": "XML_ASDM_ENTITIES", "Main": "XML_MAINTABLE_ENTITIES",
     "AlmaRadiometer": "XML_ALMARADIOMETERTAB_ENTITIES", "Antenna": "XML_ANTENNATABLE_ENTITIES",
