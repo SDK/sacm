@@ -13,13 +13,15 @@ class AsdmCheck:
     uid = ''
     asdmDict = dict()
     check = dict()
+    toc = ''
+
 
 
 
     def setUID(self,uid=None):
         self.uid = uid
         try:
-            asdmList, asdm = getASDM(self.uid)
+            asdmList, asdm , self.toc = getASDM(self.uid)
             for i in asdmList:
                 self.asdmDict[i[0].strip()] = i[3].strip()
             return True
@@ -28,7 +30,7 @@ class AsdmCheck:
             print e
 
 
-    def isValidNullState(self):
+    def isNullState(self):
         """
         Checks the Main.xml table for "null" states
         Sets in the self.check dictionary the value 'NullState' with True or False
@@ -71,7 +73,7 @@ class AsdmCheck:
             print e
             return False
 
-    def isValidSyscaltimestamp(self):
+    def isSyscaltimestamp(self):
         try:
             syscal = getSysCal(self.asdmDict['SysCal'])
             dfa = syscal[['spectralWindowId','antennaId','timeInterval']]
@@ -133,52 +135,55 @@ class AsdmCheck:
 
     def doCheck(self):
         self.iscsv2555()
-        self.isValidSyscaltimestamp()
+        self.isSyscaltimestamp()
         self.isValidUID()
         self.isfixplanets()
-        self.isValidNullState()
+        self.isNullState()
 
 
     def save(self):
-        #TODO do nothing if docheck is not run, plus some checks
-        sql = "select * from public.metadata where asdm_uid ='"+self.uid+"'"
-        pgcursor.execute(sql)
-        row = pgcursor.fetchone()
-        if self.check['SysCalTimes'] and self.check['ValidUID'] and self.check['CSV2555'] and self.check['FixPlanets'] and self.check['NullState']:
-            overall = True
+        if len(self.check) != 0:
+            sql = "select * from public.metadata where asdm_uid ='"+self.uid+"'"
+            pgcursor.execute(sql)
+            row = pgcursor.fetchone()
+            if self.check['SysCalTimes'] and self.check['ValidUID'] and self.check['CSV2555'] and self.check['FixPlanets'] and self.check['NullState']:
+                overall = True
+            else:
+                overall = False
+            #print row
+            if row is not None:
+                print "ASDM: %s exist. UPDATING" % self.uid
+                try:
+                    pgcursor.execute("""UPDATE public.metadata set "check" = %s,
+                                        syscal_time = %s,
+                                        valid_uid = %s,
+                                        csv2555 = %s,
+                                        fixplanet = %s,
+                                        null_state = %s,
+                                        udate = %s
+                                        where asdm_uid = %s;""",
+                        ( overall, self.check['SysCalTimes'], self.check['ValidUID'], self.check['CSV2555'],
+                          self.check['FixPlanets'],self.check['NullState'],datetime.datetime.now (),self.uid,))
+                    pgconn.commit()
+                except Exception as e:
+                    print e
+                    pass
+            else:
+                print "ASDM: %s exist. INSERTING" % self.uid
+                try:
+                    pgcursor.execute("""INSERT INTO "public"."metadata" ("asdm_uid","check","syscal_time","valid_uid","csv2555","fixplanet","null_state","cdate","udate","time_of_creation")
+                                 values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                                 (self.uid, overall, self.check['SysCalTimes'], self.check['ValidUID'], self.check['CSV2555'],
+                                  self.check['FixPlanets'],self.check['NullState'],datetime.datetime.now (),datetime.datetime.now (),self.toc))
+                    pgconn.commit()
+                except Exception as e:
+                    print e
+                    pass
         else:
-            overall = False
-        print row
-        if row is not None:
-            print "Exist>> UPDATE"
-            try:
-                pgcursor.execute("""UPDATE public.metadata set "check" = %s,
-                                    syscal_time = %s,
-                                    valid_uid = %s,
-                                    csv2555 = %s,
-                                    fixplanet = %s,
-                                    null_state = %s,
-                                    udate = %s
-                                    where asdm_uid = %s;""",
-                    ( overall, self.check['SysCalTimes'], self.check['ValidUID'], self.check['CSV2555'],
-                      self.check['FixPlanets'],self.check['NullState'],datetime.datetime.now (),self.uid,))
-                pgconn.commit()
-            except Exception as e:
-                print e
-                pass
-        else:
-            print "Doest NOT Exist>>INSERT"
-            try:
-                pgcursor.execute("""INSERT INTO "public"."metadata" ("asdm_uid","check","syscal_time","valid_uid","csv2555","fixplanet","null_state","cdate","udate")
-                             values(%s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                             (self.uid, overall, self.check['SysCalTimes'], self.check['ValidUID'], self.check['CSV2555'],
-                              self.check['FixPlanets'],self.check['NullState'],datetime.datetime.now (),datetime.datetime.now (),))
-                pgconn.commit()
-            except Exception as e:
-                print e
-                pass
+            print "Run docheck() before save"
+            pass
 
-        pass
+
 
 
 

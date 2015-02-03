@@ -20,7 +20,10 @@ def getASDM(uid=None):
                                  i.getElementsByTagName('NumberRows')[0].firstChild.data,
                                  str(i.getElementsByTagName('Entity')[0].getAttribute('entityTypeName')),
                                  str(i.getElementsByTagName('Entity')[0].getAttribute('entityId'))))
-        return asdmList, pd.DataFrame(asdmList, columns=['table', 'numrows', 'typename', 'uid'])
+        toc = asdm.getElementsByTagName('TimeOfCreation')[0].firstChild.data
+
+        return asdmList, pd.DataFrame(asdmList, columns=['table', 'numrows', 'typename', 'uid'],) , datetime.datetime.strptime(toc.strip()[0:19],"%Y-%m-%dT%H:%M:%S" )
+
     else:
         return False
 
