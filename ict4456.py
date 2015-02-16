@@ -30,23 +30,31 @@ def checkOrder(sb_uid=None):
     return True
 
 
-orcl = cx_Oracle.connect(database)
-cursor = orcl.cursor()
-projects = list()
+if __name__ == '__main__':
 
-sql = """select al1.DOMAIN_ENTITY_ID,al1.OBS_PROJECT_ID
-from ALMA.SCHED_BLOCK_STATUS al1,
-  ALMA.BMMV_OBSPROJECT al2
-where
-  (al2.code like '2011._.%._' or al2.code like '2012._.%._' or al2.code like '2013._.%._')
-  and al1.OBS_PROJECT_ID = al2.PRJ_ARCHIVE_UID
-order by 2 desc"""
+    orcl = cx_Oracle.connect(database)
+    cursor = orcl.cursor()
+    projects = list()
 
-cursor.execute(sql)
+    sql = """select al1.DOMAIN_ENTITY_ID,al1.OBS_PROJECT_ID
+    from ALMA.SCHED_BLOCK_STATUS al1,
+      ALMA.BMMV_OBSPROJECT al2
+    where
+      (al2.code like '2011._.%._' or al2.code like '2012._.%._' or al2.code like '2013._.%._')
+      and al1.OBS_PROJECT_ID = al2.PRJ_ARCHIVE_UID
+    order by 2 desc"""
 
-for i,j in cursor:
-    projects.append([i,j])
+    cursor.execute(sql)
 
-df = pd.DataFrame(projects)
-df.columns = [['SB_UID','PRJ_UID']]
-df['ICT'] = df.apply(lambda x: checkOrder(x['SB_UID']) , axis = 1)
+    for i,j in cursor:
+        print i,j
+        try:
+            projects.append([i,j,checkOrder(i)])
+        except Exception as e:
+            print 'SB with problem:', i
+            pass
+    df = pd.DataFrame(projects)
+
+    ict = open('ict4456.csv','w')
+    df.to_csv(ict,index=False,sep= ' ')
+    ict.close()
