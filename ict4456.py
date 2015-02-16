@@ -3,7 +3,7 @@ from MetaData import *
 
 def checkOrder(sb_uid=None):
     a,b = getSB_spectralconf(sb_uid)
-    baseband = a[[7,8]]
+    baseband = a[[1,2]]
     baseband.columns = [['partId','BB']]
     spw = b[[0,3,4]]
     spw.columns = [['spwId','SB_UID','partId']]
