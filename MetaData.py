@@ -88,7 +88,8 @@ class AsdmCheck:
                 nT = df.utimes.nunique()
                 df['utimestamp'] = df.apply(lambda x: mypl.floor(x['timestamp']) - t0 , axis =1)
                 nTS = df.utimestamp.nunique()
-                #print name,nT, nTS
+                print name,nT, nTS
+                print (group)
                 if nT != nTS:
                     self.check['SysCalTimes'] = True
                     return True
