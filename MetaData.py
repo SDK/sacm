@@ -3,9 +3,6 @@ from checker import *
 import pylab as mypl
 import math as mymath
 
-uid = 'uid://A002/X899169/X1179'
-
-
 class AsdmCheck:
     """
 

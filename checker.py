@@ -28,6 +28,8 @@ def getASDM(uid=None):
         return False
 
 
+
+
 def getMain(uid=None):
     mainXML = GetXML(uid,'Main')
     if mainXML is not False:
@@ -52,6 +54,23 @@ def getMain(uid=None):
     else:
         return False
 
+def getAntennas(uid=None):
+    antennaXML = GetXML(uid,'Antenna')
+    if antennaXML is not False:
+        antenna = minidom.parseString(antennaXML)
+        antennaList = list()
+        rows = antenna.getElementsByTagName('row')
+        for i in rows:
+            antennaList.append((
+                i.getElementsByTagName('antennaId')[0].firstChild.data,
+                i.getElementsByTagName('name')[0].firstChild.data,
+                i.getElementsByTagName('antennaMake')[0].firstChild.data,
+                i.getElementsByTagName('dishDiameter')[0].firstChild.data,
+                i.getElementsByTagName('stationId')[0].firstChild.data,
+            ))
+        return pd.DataFrame(antennaList,columns=['antennaId','name','antennaMake','dishDiameter','stationId'])
+    else:
+        return False
 
 def getScan(uid=None):
     scanXML = GetXML(uid,'Scan')
