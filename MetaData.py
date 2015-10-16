@@ -2,6 +2,7 @@ __author__ = 'sagonzal'
 from checker import *
 import pylab as mypl
 import math as mymath
+import itertools
 
 class AsdmCheck:
     """
@@ -85,8 +86,8 @@ class AsdmCheck:
                 nT = df.utimes.nunique()
                 df['utimestamp'] = df.apply(lambda x: mypl.floor(x['timestamp']) - t0 , axis =1)
                 nTS = df.utimestamp.nunique()
-                print name,nT, nTS
-                print (group)
+                #print name,nT, nTS
+                #print (group)
                 if nT != nTS:
                     self.check['SysCalTimes'] = True
                     return True
@@ -131,12 +132,57 @@ class AsdmCheck:
         except Exception as e:
             return False
 
+    def ict4871(self):
+        try:
+            ant = getAntennas(self.asdmDict['Antenna'])
+            nant = ant.antennaId.nunique()
+            syscal = getSysCal(self.asdmDict['SysCal'])
+            sys_nant = syscal.antennaId.nunique()
+            scan = getScan(self.asdmDict['Scan'])
+            sc = scan[['scanNumber','startTime','scanIntent']]
+            problem_list = list()
+            if nant == sys_nant:
+                df = syscal[['timeInterval','antennaId','spectralWindowId']]
+                df['start'] = df.apply(lambda x: int(x['timeInterval'].strip().split(' ')[0]) - int(x['timeInterval'].strip().split(' ')[1])/2, axis = 1)
+                df2 = pd.merge (df,sc, left_on='start',right_on='startTime',copy=False,how='inner')
+                antlist = [x.strip(' ') for x in ant.antennaId.unique().tolist()]
+                df3 = df2.groupby(['antennaId','spectralWindowId','scanNumber'])
+                spw_list = syscal.spectralWindowId.unique().tolist()
+                scan_list = df2.scanNumber.unique().tolist()
+                fu = list(itertools.product(antlist,spw_list,scan_list))
+                for i in fu:
+                    try:
+                        df3.groups[i]
+                    except KeyError as k:
+                        problem_list.append(i)
+
+                if len(problem_list) > 0:
+                    df = pd.DataFrame(problem_list, columns= ['antennaId','spectralWindowId','scanNumber'])
+                    popular_scan = df.scanNumber.mode().values[0]
+                    antennas = df.antennaId.nunique()
+                    self.check['MissingTsys'] = False
+                    self.check['MissingTsys_explain'] = 'Scan: '+str(popular_scan)+' Antennas Affected: '+str(antennas)
+                else:
+                    self.check['MissingTsys'] = True
+
+            else:
+                self.check['AntennasMissing'] = "Number of antennas are diferent between Antenna.xml ("+nant+") and SysCal.xml ("+sys_nant+")"
+                self.check['MissingTsys'] = False
+                self.check['MissingTsys_explain'] = 'Some antenna is completly missing from Syscal.xml table'
+
+
+        except Exception as e:
+            print e
+            return False
+
     def doCheck(self):
         self.iscsv2555()
         self.isSyscaltimestamp()
         self.isValidUID()
         self.isfixplanets()
         self.isNullState()
+        self.ict4871()
+
 
 
     def save(self):
