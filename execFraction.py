@@ -54,6 +54,20 @@ scan['delta'] = scan.apply(lambda x:  (gtm2(x['endTime']) - gtm2(x['startTime'])
 
 ToSEB = float(scan['delta'][scan['target'] == True].sum())
 
+syscal = getSysCal (asdm.asdmDict['SysCal'])
+
+
+syscal['startTime'] = syscal.apply(lambda x: int(x['timeInterval'].split(' ')[1]) - int(x['timeInterval'].split(' ')[2])/2 ,axis=1 )
+
+
+df = syscal.apply(lambda x: arrayParser(x['tsysSpectrum'],2), axis = 1)
+df1 = pd.DataFrame (df)
+
+df1.columns = ['hola']
+x = pd.concat([pd.DataFrame(v,index=np.repeat(k,len(v))) for k,v in df1.hola.to_dict().items()])
+
+
+
 print ToSEB,ToSOT,TsysOT,NantEB
 
 
