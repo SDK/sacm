@@ -72,6 +72,26 @@ def getAntennas(uid=None):
     else:
         return False
 
+def getSBSummary(uid=None):
+    summaryXML = GetXML(uid,'SBSummary')
+    if summaryXML is not False:
+        summary = minidom.parseString(summaryXML)
+        summaryList = list()
+        rows = summary.getElementsByTagName('row')
+        for i in rows:
+            summaryList.append((i.getElementsByTagName('sbSummaryUID')[0].getElementsByTagName('EntityRef')[0].getAttribute('entityId'),
+                                i.getElementsByTagName('projectUID')[0].getElementsByTagName('EntityRef')[0].getAttribute('entityId'),
+                                i.getElementsByTagName('obsUnitSetUID')[0].getElementsByTagName('EntityRef')[0].getAttribute('entityId'),
+                             float(i.getElementsByTagName('frequency')[0].firstChild.data),
+                             i.getElementsByTagName('frequencyBand')[0].firstChild.data,
+                             i.getElementsByTagName('scienceGoal')[0].firstChild.data,
+                             i.getElementsByTagName('weatherConstraint')[0].firstChild.data ))
+
+        return pd.DataFrame(summaryList, columns=['sbSummaryUID', 'projectUID', 'obsUnitSetUID', 'frequency',
+                                             'frequencyBand', 'scienceGoal', 'weatherConstraint'])
+    else:
+        return False
+
 def getScan(uid=None):
     scanXML = GetXML(uid,'Scan')
     if scanXML is not False:
@@ -353,6 +373,69 @@ def getSBData(sbuid=None):
     field = pd.DataFrame(fieldList)
     return bb,specs,target,phase,science,field
 
+def getSBFields(sbuid=None):
+    schedXML = GetXML(sbuid, 'SchedBlock')
+    sched = minidom.parseString(schedXML)
+
+    rows = sched.getElementsByTagName('sbl:FieldSource')
+    fieldList = list()
+    for i in rows:
+        fieldList.append((
+            i.getAttribute('entityPartId'),
+            i.getAttribute('solarSystemObject'),
+            i.getElementsByTagName('sbl:sourceName')[0].firstChild.data,
+            #i.getElementsByTagName('sbl:sourceEphemeris')[0].firstChild.data,
+            i.getElementsByTagName('sbl:name')[0].firstChild.data,
+            i.getElementsByTagName('sbl:sourceCoordinates')[0].getElementsByTagName('val:longitude')[0].firstChild.data,
+            i.getElementsByTagName('sbl:sourceCoordinates')[0].getElementsByTagName('val:latitude')[0].firstChild.data,
+
+        ))
+
+    field = pd.DataFrame(fieldList, columns=['entityPartId','solarSystemObject','sourceName','name','longitude','latitude'])
+    return field
+
+def getSBScience(sbuid=None):
+    schedXML = GetXML(sbuid, 'SchedBlock')
+    sched = minidom.parseString(schedXML)
+
+    rows = sched.getElementsByTagName('sbl:ScienceParameters')
+    scienceList = list()
+    for i in rows:
+        scienceList.append((
+            i.getAttribute('entityPartId'),
+            i.getElementsByTagName('sbl:name')[0].firstChild.data,
+            i.getElementsByTagName('sbl:representativeBandwidth')[0].firstChild.data,
+            i.getElementsByTagName('sbl:representativeBandwidth')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:representativeFrequency')[0].firstChild.data,
+            i.getElementsByTagName('sbl:representativeFrequency')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:sensitivityGoal')[0].firstChild.data,
+            i.getElementsByTagName('sbl:sensitivityGoal')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:integrationTime')[0].firstChild.data,
+            i.getElementsByTagName('sbl:integrationTime')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:subScanDuration')[0].firstChild.data,
+            i.getElementsByTagName('sbl:subScanDuration')[0].getAttribute('unit'),
+            i.getElementsByTagName('sbl:forceAtmCal')[0].firstChild.data
+        ))
+
+    science = pd.DataFrame(scienceList, columns=['entityPartId','name','representativeBandwidth','unit_rb','representativeFrequency','unit_rf',
+                                                 'sensitivityGoal','unit_sg','integrationTime','unit_it','subScanDuration','unit_sc','forceAtmCal'])
+    return science
+
+def getSBTargets(sbuid=None):
+    schedXML = GetXML(sbuid, 'SchedBlock')
+    sched = minidom.parseString(schedXML)
+    targetList = list()
+    rows = sched.getElementsByTagName('sbl:Target')
+    for i in rows:
+        targetList.append((
+            i.getAttribute('entityPartId'),
+            i.getElementsByTagName('sbl:AbstractInstrumentSpecRef')[0].getAttribute('partId'),
+            i.getElementsByTagName('sbl:FieldSourceRef')[0].getAttribute('partId'),
+            i.getElementsByTagName('sbl:ObservingParametersRef')[0].getAttribute('partId'),
+        ))
+
+    target = pd.DataFrame(targetList, columns=['entityPartId', 'InstrumentSpec', 'FieldSource', 'ObsParameter'])
+    return target
 
 
 def getSB_spectralconf(sbuid=None):

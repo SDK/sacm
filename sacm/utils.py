@@ -27,8 +27,7 @@ tables = {"ASDM": "XML_ASDM_ENTITIES", "Main": "XML_MAINTABLE_ENTITIES",
     "Processor": "XML_PROCESSORTABLE_ENTITIES", "Receiver": "XML_RECEIVERTABLE_ENTITIES",
     "SBSummary": "XML_SBSUMMARYTABLE_ENTITIES", "Scan": "XML_SCANTABLE_ENTITIES",
     "Source": "XML_SOURCETABLE_ENTITIES", "SpectralWindow": "XML_SPECTRALWINDOWTAB_ENTITIES",
-    "Ephemeris": "XML_EPHEMERISTABLE_ENTITIES", "State": "XML_STATETABLE_ENTITIES",
-    "Station": "XML_STATIONTABLE_ENTITIES", "Subscan": "XML_SUBSCANTABLE_ENTITIES",
+    "State": "XML_STATETABLE_ENTITIES", "Station": "XML_STATIONTABLE_ENTITIES", "Subscan": "XML_SUBSCANTABLE_ENTITIES",
     "SquareLawDetector": "XML_SQUARELAWDETECTOR_ENTITIES", "SwitchCycle": "XML_SWITCHCYCLETABLE_ENTITIES",
     "SysCal": "XML_SYSCALTABLE_ENTITIES", "Weather": "XML_WEATHERTABLE_ENTITIES",
     "SchedBlock":"XML_SCHEDBLOCK_ENTITIES", "ObsProject":"XML_OBSPROJECT_ENTITIES"}
@@ -124,6 +123,8 @@ def arrayParser(line=None, dimensions=None):
         return result
 
 
+
+
 def GetXML(archiveUID=None,table=None):
     """
 
@@ -199,7 +200,7 @@ def getProjectCodes(cycle=2):
     cycle_code[0] = '2011._.%._'
     cycle_code[1] = '2012._.%._'
     cycle_code[2] = '2013._.%._'
-    cycle_code[3] = '2014._.%._'
+    cycle_code[3] = '2015._.%._'
 
     sql = '''select al2.PRJ_ARCHIVE_UID, al2.code
     from ALMA.OBS_PROJECT_STATUS al1,
