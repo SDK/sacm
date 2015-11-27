@@ -116,6 +116,44 @@ def getScan(uid=None):
         return False
 
 
+def getSpectralWindows(uid=None):
+    spectralXML = GetXML(uid,'SpectralWindow')
+    if spectralXML is not False:
+        scan = minidom.parseString(spectralXML)
+        spectralList = list()
+        rows = scan.getElementsByTagName('row')
+        for i in rows:
+            if i.getAttribute('basebandName')[0].firstChild.data != 'NOBB':
+                spectralList.append((i.getElementsByTagName('spectralWindowId')[0].firstChild.data,
+                                        i.getElementsByTagName('basebandName')[0].firstChild.data,
+                                        i.getElementsByTagName('netSideband')[0].firstChild.data,
+                                        i.getElementsByTagName('numChan')[0].firstChild.data,
+                                        i.getElementsByTagName('refFreq')[0].firstChild.data,
+                                        i.getElementsByTagName('sidebandProcessingMode')[0].firstChild.data,
+                                        i.getElementsByTagName('totBandwidth')[0].firstChild.data,
+                                        i.getElementsByTagName('windowFunction')[0].firstChild.data,
+                                        i.getElementsByTagName('chanFreqStart')[0].firstChild.data,
+                                        i.getElementsByTagName('chanFreqStep')[0].firstChild.data,
+                                        i.getElementsByTagName('chanWidth')[0].firstChild.data,
+                                        i.getElementsByTagName('effectiveBw')[0].firstChild.data,
+                                        i.getElementsByTagName('name')[0].firstChild.data,
+                                        i.getElementsByTagName('quantization')[0].firstChild.data,
+                                        i.getElementsByTagName('refChan')[0].firstChild.data,
+                                        i.getElementsByTagName('resolution')[0].firstChild.data,
+                                        i.getElementsByTagName('numAssocValues')[0].firstChild.data,
+                                        i.getElementsByTagName('assocNature')[0].firstChild.data,
+                                        i.getElementsByTagName('assocSpectralWindowId')[0].firstChild.data,))
+
+        return pd.DataFrame(spectralList, columns=['spectralWindowId', 'basebandName', 'netSideband', 'numChan',
+                                             'refFreq', 'sidebandProcessingMode', 'totBandwidth', 'windowFunction',
+                                             'chanFreqStart','chanFreqStep','chanWidth','effectiveBw',
+                                            'name','quantization','refChan','resolution',
+                                            'numAssocValues','assocNature','assocSpectralWindowId'])
+    else:
+        return False
+
+
+
 def getSubScan(uid=None):
     subscanXML = GetXML(uid,'Subscan')
     if subscanXML is not False:
