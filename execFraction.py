@@ -48,5 +48,13 @@ TsysOT = result['Tsys']
 ant = getAntennas(asdm.asdmDict['Antenna'])
 NantEB = ant.antennaId.count()
 
+scan = getScan(asdm.asdmDict['Scan'])
+scan['target'] = scan.apply(lambda x: True if str(x['scanIntent']).find('OBSERVE_TARGET') > 0 else False ,axis = 1)
+scan['delta'] = scan.apply(lambda x:  (gtm2(x['endTime']) - gtm2(x['startTime'])).total_seconds() ,axis = 1)
+
+ToSEB = float(scan['delta'][scan['target'] == True].sum())
+
+print ToSEB,ToSOT,TsysOT,NantEB
+
 
 
