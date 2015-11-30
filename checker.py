@@ -540,21 +540,3 @@ def getSB_spectralconf(sbuid=None):
 
     return bb,specs
 
-def findChannel(start=None, width=None, repFreq=None):
-    channel = 0
-    if width < 0:
-        for i in xrange(128):
-            if start > repFreq:
-                start = start + width
-            else:
-                channel = i
-                break
-    else:
-        for i in xrange(128):
-            if start < repFreq:
-                start = start - width
-            else:
-                channel = i
-                break
-
-    return channel

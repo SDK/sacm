@@ -66,6 +66,42 @@ def gtm2(number=None):
     st = st-3506716800L
     return datetime.datetime.fromtimestamp(mktime(gmtime(st))).replace(microsecond=(number))
 
+def returnMAXPWVC(pwv=None):
+    if pwv <= 0.472:
+        return 0.472
+    elif pwv <= 0.658:
+        return 0.658
+    elif pwv <= 0.913:
+        return 0.913
+    elif pwv <= 1.262:
+        return 1.262
+    elif pwv <= 1.796:
+        return  1.796
+    elif pwv <= 2.748:
+        return 2.748
+    else:
+        return 5.186
+
+
+def findChannel(start=None, width=None, repFreq=None, nchan=None):
+    channel = 0
+    if width < 0:
+        for i in xrange(nchan):
+            if start > repFreq:
+                start = start + width
+            else:
+                channel = i
+                break
+    else:
+        for i in xrange(nchan):
+            if start < repFreq:
+                start = start + width
+            else:
+                channel = i
+                break
+
+    return channel
+
 
 def RadianTo(num=None, unit=None):
     """

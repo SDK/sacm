@@ -3,7 +3,7 @@ from MetaData import *
 import pandas as pd
 import sys
 import Sensitivity.sensitivity as sensitivity
-
+##############################
 
 
 NAntOT = 36
@@ -17,7 +17,7 @@ except Exception as e:
     print e
     sys.exit(1)
 
-
+############################
 sbUID = sb.values[0][0]
 freq = float(sb.values[0][3])*1e9
 band = sb.values[0][4]
@@ -25,6 +25,10 @@ band = sb.values[0][4]
 for i in sb.values[0][6].split('"'):
     if i.find('maxPWVC') >= 0: maxPWV = float(i.split('=')[1].split(' ')[1])
 
+maxPWV = returnMAXPWVC(maxPWV)
+
+
+print sbUID
 
 science = getSBScience(sbUID)
 field = getSBFields(sbUID)
@@ -35,40 +39,56 @@ df2 = pd.merge(df1,field,left_on='FieldSource',right_on='entityPartId',how='inne
 
 dec = float(df2['latitude'].values[0])
 ToSOT = float(df2['integrationTime'].values[0])
-
+###############################
 
 s = sensitivity.SensitivityCalculator(config_dir=configDir)
-
-
-
 result =  s.calcSensitivity(maxPWV,freq,dec=dec,latitude=-23.029, N=NAntOT, BW=7.5e9, mode='image', N_pol=2,returnFull=True)
-
 TsysOT = result['Tsys']
 
+################################
 ant = getAntennas(asdm.asdmDict['Antenna'])
 NantEB = ant.antennaId.count()
 
+
+################################
 scan = getScan(asdm.asdmDict['Scan'])
 scan['target'] = scan.apply(lambda x: True if str(x['scanIntent']).find('OBSERVE_TARGET') > 0 else False ,axis = 1)
 scan['delta'] = scan.apply(lambda x:  (gtm2(x['endTime']) - gtm2(x['startTime'])).total_seconds() ,axis = 1)
 
+target = scan[scan['target'] == True]['sourceName'].unique()[0]
+scan['atm'] = scan.apply(lambda x: True if str(x['scanIntent']).find('CALIBRATE_ATMOSPHERE') > 0 and x['sourceName'] == target else False,axis =1 )
+
 ToSEB = float(scan['delta'][scan['target'] == True].sum())
 
+
+################################
 syscal = getSysCal (asdm.asdmDict['SysCal'])
-
-
 syscal['startTime'] = syscal.apply(lambda x: int(x['timeInterval'].split(' ')[1]) - int(x['timeInterval'].split(' ')[2])/2 ,axis=1 )
 
 
-df = syscal.apply(lambda x: arrayParser(x['tsysSpectrum'],2), axis = 1)
-df1 = pd.DataFrame (df)
-
-df1.columns = ['hola']
-x = pd.concat([pd.DataFrame(v,index=np.repeat(k,len(v))) for k,v in df1.hola.to_dict().items()])
+###################################
+spw = getSpectralWindow(asdm.asdmDict['SpectralWindow'])
+spw['repWindow'] = spw.apply(lambda x: findChannel(float(x['chanFreqStart']),float(x['chanFreqStep']), freq, int(x['numChan'])), axis = 1)
 
 
 
-print ToSEB,ToSOT,TsysOT,NantEB
+################################
+
+
+df1 = syscal[syscal['startTime'].isin(scan[scan['atm'] == True]['startTime'])]
+df2 = df1[df1['spectralWindowId'] == spw[spw['repWindow'] > 0]['spectralWindowId'].values[0].strip()]
+channel = int(spw[spw['repWindow'] > 0]['repWindow'].values[0])
+
+
+data = df2.apply(lambda x: arrayParser(x['tsysSpectrum'],2), axis = 1)
+data2 = pd.DataFrame (data)
+data2.columns = ['hola']
+x = pd.concat([pd.DataFrame(v,index=np.repeat(k,len(v))) for k,v in data2.hola.to_dict().items()])
+x = x.convert_objects(convert_numeric=True)
+
+TsysEB = x[channel].median()
+
+print ToSEB,ToSOT,TsysOT,TsysEB, NantEB
 
 
 
