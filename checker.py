@@ -116,44 +116,6 @@ def getScan(uid=None):
         return False
 
 
-def getSpectralWindows(uid=None):
-    spectralXML = GetXML(uid,'SpectralWindow')
-    if spectralXML is not False:
-        scan = minidom.parseString(spectralXML)
-        spectralList = list()
-        rows = scan.getElementsByTagName('row')
-        for i in rows:
-            if i.getAttribute('basebandName')[0].firstChild.data != 'NOBB':
-                spectralList.append((i.getElementsByTagName('spectralWindowId')[0].firstChild.data,
-                                        i.getElementsByTagName('basebandName')[0].firstChild.data,
-                                        i.getElementsByTagName('netSideband')[0].firstChild.data,
-                                        i.getElementsByTagName('numChan')[0].firstChild.data,
-                                        i.getElementsByTagName('refFreq')[0].firstChild.data,
-                                        i.getElementsByTagName('sidebandProcessingMode')[0].firstChild.data,
-                                        i.getElementsByTagName('totBandwidth')[0].firstChild.data,
-                                        i.getElementsByTagName('windowFunction')[0].firstChild.data,
-                                        i.getElementsByTagName('chanFreqStart')[0].firstChild.data,
-                                        i.getElementsByTagName('chanFreqStep')[0].firstChild.data,
-                                        i.getElementsByTagName('chanWidth')[0].firstChild.data,
-                                        i.getElementsByTagName('effectiveBw')[0].firstChild.data,
-                                        i.getElementsByTagName('name')[0].firstChild.data,
-                                        i.getElementsByTagName('quantization')[0].firstChild.data,
-                                        i.getElementsByTagName('refChan')[0].firstChild.data,
-                                        i.getElementsByTagName('resolution')[0].firstChild.data,
-                                        i.getElementsByTagName('numAssocValues')[0].firstChild.data,
-                                        i.getElementsByTagName('assocNature')[0].firstChild.data,
-                                        i.getElementsByTagName('assocSpectralWindowId')[0].firstChild.data,))
-
-        return pd.DataFrame(spectralList, columns=['spectralWindowId', 'basebandName', 'netSideband', 'numChan',
-                                             'refFreq', 'sidebandProcessingMode', 'totBandwidth', 'windowFunction',
-                                             'chanFreqStart','chanFreqStep','chanWidth','effectiveBw',
-                                            'name','quantization','refChan','resolution',
-                                            'numAssocValues','assocNature','assocSpectralWindowId'])
-    else:
-        return False
-
-
-
 def getSubScan(uid=None):
     subscanXML = GetXML(uid,'Subscan')
     if subscanXML is not False:
@@ -205,22 +167,29 @@ def getSpectralWindow(uid=None):
         spwList = list()
         rows = spw.getElementsByTagName('row')
         for i in rows:
-            spwList.append((i.getElementsByTagName('spectralWindowId')[0].firstChild.data,
-                            i.getElementsByTagName('basebandName')[0].firstChild.data,
-                            i.getElementsByTagName('netSideband')[0].firstChild.data,
-                            int(i.getElementsByTagName('numChan')[0].firstChild.data),
-                            float(i.getElementsByTagName('refFreq')[0].firstChild.data),
-                            i.getElementsByTagName('sidebandProcessingMode')[0].firstChild.data,
-                            float(i.getElementsByTagName('totBandwidth')[0].firstChild.data),
-                            #i.getElementsByTagName('chanFreqArray')[0].firstChild.data,
-                            #i.getElementsByTagName('chanWidthArray')[0].firstChild.data,
-                            #i.getElementsByTagName('effectiveBwArray')[0].firstChild.data,
-                            i.getElementsByTagName('name')[0].firstChild.data,
-                            #i.getElementsByTagName('resolutionArray')[0].firstChild.data,
-                            i.getElementsByTagName('assocNature')[0].firstChild.data,
-                            i.getElementsByTagName('assocSpectralWindowId')[0].firstChild.data.strip()))
+            if int(i.getElementsByTagName('numChan')[0].firstChild.data) > 4:
+                try:
+                    spwList.append((i.getElementsByTagName('spectralWindowId')[0].firstChild.data,
+                                    i.getElementsByTagName('basebandName')[0].firstChild.data,
+                                    i.getElementsByTagName('netSideband')[0].firstChild.data,
+                                    int(i.getElementsByTagName('numChan')[0].firstChild.data),
+                                    float(i.getElementsByTagName('refFreq')[0].firstChild.data),
+                                    i.getElementsByTagName('sidebandProcessingMode')[0].firstChild.data,
+                                    float(i.getElementsByTagName('totBandwidth')[0].firstChild.data),
+                                    i.getElementsByTagName('chanFreqStart')[0].firstChild.data,
+                                    i.getElementsByTagName('chanFreqStep')[0].firstChild.data,
+                                    i.getElementsByTagName('chanWidth')[0].firstChild.data,
+                                    i.getElementsByTagName('effectiveBw')[0].firstChild.data,
+                                    i.getElementsByTagName('name')[0].firstChild.data,
+                                    #i.getElementsByTagName('resolutionArray')[0].firstChild.data,
+                                    i.getElementsByTagName('assocNature')[0].firstChild.data,
+                                    i.getElementsByTagName('assocSpectralWindowId')[0].firstChild.data))
+                except IndexError as e:
+                    print e
+
         return pd.DataFrame(spwList, columns=['spectralWindowId', 'basebandName', 'netSideband', 'numChan',
-                                             'refFreq', 'sidebandProcessingMode', 'totBandwidth', 'name',
+                                             'refFreq', 'sidebandProcessingMode', 'totBandwidth', 'chanFreqStart','chanFreqStep','chanWidth',
+                                             'effectiveBw', 'name',
                                              'assocNature', 'assocSpectralWindowId'])
     else:
         return False
@@ -476,6 +445,28 @@ def getSBTargets(sbuid=None):
     return target
 
 
+def getScienceGoal(prjUID=None):
+    projXML = GetXML(prjUID, 'ObsProject')
+    proj = minidom.parseString(projXML)
+    scienceGoalList = list()
+    rows = proj.getElementsByTagName('prj:ScienceSpectralWindow')
+
+    for i in rows:
+        scienceGoalList.append((
+            i.parentNode.parentNode.getElementsByTagName('prj:name')[0].firstChild.data,
+            i.parentNode.parentNode.getElementsByTagName('prj:ObsUnitSetRef')[0].getAttribute('entityId'),
+            i.parentNode.parentNode.getElementsByTagName('prj:ObsUnitSetRef')[0].getAttribute('partId'),
+            i.parentNode.getElementsByTagName('prj:representativeFrequency')[0].firstChild.data,
+            i.parentNode.getElementsByTagName('prj:userRepresentativeFrequency')[0].firstChild.data,
+            i.getElementsByTagName('prj:centerFrequency')[0].firstChild.data,
+            i.getElementsByTagName('prj:representativeWindow')[0].firstChild.data,
+        ))
+
+    scienceGoal = pd.DataFrame(scienceGoalList)
+    return scienceGoal
+
+
+
 def getSB_spectralconf(sbuid=None):
     schedXML = GetXML(sbuid, 'SchedBlock')
     sched = minidom.parseString(schedXML)
@@ -549,3 +540,21 @@ def getSB_spectralconf(sbuid=None):
 
     return bb,specs
 
+def findChannel(start=None, width=None, repFreq=None):
+    channel = 0
+    if width < 0:
+        for i in xrange(128):
+            if start > repFreq:
+                start = start + width
+            else:
+                channel = i
+                break
+    else:
+        for i in xrange(128):
+            if start < repFreq:
+                start = start - width
+            else:
+                channel = i
+                break
+
+    return channel
