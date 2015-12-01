@@ -90,7 +90,7 @@ def findChannel(start=None, width=None, repFreq=None, nchan=None):
             if start > repFreq:
                 start = start + width
             else:
-                channel = i
+                channel = -1.*i
                 break
     else:
         for i in xrange(nchan):

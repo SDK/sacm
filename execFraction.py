@@ -79,6 +79,8 @@ df1 = syscal[syscal['startTime'].isin(scan[scan['atm'] == True]['startTime'])]
 df2 = df1[df1['spectralWindowId'] == spw[spw['repWindow'] > 0]['spectralWindowId'].values[0].strip()]
 channel = int(spw[spw['repWindow'] > 0]['repWindow'].values[0])
 
+if channel < 0:
+    channel+=128
 
 data = df2.apply(lambda x: arrayParser(x['tsysSpectrum'],2), axis = 1)
 data2 = pd.DataFrame (data)
@@ -86,9 +88,21 @@ data2.columns = ['hola']
 x = pd.concat([pd.DataFrame(v,index=np.repeat(k,len(v))) for k,v in data2.hola.to_dict().items()])
 x = x.convert_objects(convert_numeric=True)
 
+
 TsysEB = x[channel].median()
 
-print ToSEB,ToSOT,TsysOT,TsysEB, NantEB
+result = {'TimeOnSource_EB':ToSEB,
+              'TimeOnSource_OT':ToSOT,
+              'Tsys_OT':TsysOT,
+              'Tsys_EB':TsysEB,
+              'NAntennas_EB':NantEB,
+              'NAntennas_OT': NAntOT,
+              'Channel': channel}
 
+execFrac = ((TsysOT/TsysEB)**2)*((NantEB*(NantEB-1.))/(NAntOT*(NAntOT-1.)))*(ToSEB/ToSOT)
+
+print 'Executional Fraction: ', execFrac
+print 'Details:'
+print result
 
 
