@@ -6,7 +6,7 @@ import Sensitivity.sensitivity as sensitivity
 ##############################
 
 
-NAntOT = 36
+NAntOT = 36.
 configDir = '/home/sagonzal/druva/PycharmProjects/MetaData/Sensitivity'
 try:
     asdmUID = sys.argv[1]
@@ -49,7 +49,7 @@ TsysOT = result['Tsys']
 
 ################################
 ant = getAntennas(asdm.asdmDict['Antenna'])
-NantEB = ant.antennaId.count()
+NantEB = float(ant.antennaId.count())
 
 
 ################################
@@ -79,7 +79,7 @@ spw['repWindow'] = spw.apply(lambda x: findChannel(float(x['chanFreqStart']),flo
 
 df1 = syscal[syscal['startTime'].isin(scan[scan['atm'] == True]['startTime'])]
 df2 = df1[df1['spectralWindowId'] == spw[spw['repWindow'] != 0]['spectralWindowId'].values[0].strip()]
-channel = int(spw[spw['repWindow'] > 0]['repWindow'].values[0])
+channel = int(spw[spw['repWindow'] != 0]['repWindow'].values[0])
 
 if channel < 0:
     channel+=128
