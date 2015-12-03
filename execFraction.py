@@ -41,6 +41,8 @@ dec = float(df2['latitude'].values[0])
 ToSOT = float(df2['integrationTime'].values[0])
 ###############################
 
+#############################
+
 s = sensitivity.SensitivityCalculator(config_dir=configDir)
 result =  s.calcSensitivity(maxPWV,freq,dec=dec,latitude=-23.029, N=NAntOT, BW=7.5e9, mode='image', N_pol=2,returnFull=True)
 TsysOT = result['Tsys']
@@ -76,7 +78,7 @@ spw['repWindow'] = spw.apply(lambda x: findChannel(float(x['chanFreqStart']),flo
 
 
 df1 = syscal[syscal['startTime'].isin(scan[scan['atm'] == True]['startTime'])]
-df2 = df1[df1['spectralWindowId'] == spw[spw['repWindow'] > 0]['spectralWindowId'].values[0].strip()]
+df2 = df1[df1['spectralWindowId'] == spw[spw['repWindow'] != 0]['spectralWindowId'].values[0].strip()]
 channel = int(spw[spw['repWindow'] > 0]['repWindow'].values[0])
 
 if channel < 0:
