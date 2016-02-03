@@ -1,3 +1,4 @@
+#!/opt/python2/bin/python
 __author__ = 'sagonzal'
 from MetaData import *
 import pandas as pd
@@ -6,6 +7,8 @@ import Sensitivity.sensitivity as sensitivity
 ##############################
 
 configDir = '/home/sagonzal/druva/PycharmProjects/MetaData/Sensitivity'
+#configDir = '/users/sagonzal/sagonzal/workspace/sacm/Sensitivity'
+
 try:
     asdmUID = sys.argv[1]
     asdm = AsdmCheck()
