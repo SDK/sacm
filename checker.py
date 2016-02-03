@@ -128,6 +128,26 @@ def getScan(uid=None):
     else:
         return False
 
+def getStation(uid=None):
+    stationXML = GetXML(uid,'Station')
+    if stationXML is not False:
+        station = minidom.parseString(stationXML)
+        stationList = list()
+        rows = station.getElementsByTagName('row')
+        for i in rows:
+            try:
+                stationList.append((
+                    i.getElementsByTagName('stationId')[0].firstChild.data,
+                    i.getElementsByTagName('name')[0].firstChild.data,
+                    i.getElementsByTagName('position')[0].firstChild.data,
+                    i.getElementsByTagName('type')[0].firstChild.data,
+                ))
+            except IndexError as error:
+                print error
+                return False
+    return pd.DataFrame(stationList ,columns=['stationId','name','position','type'])
+
+
 
 def getSubScan(uid=None):
     subscanXML = GetXML(uid,'Subscan')
