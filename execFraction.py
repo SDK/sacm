@@ -5,8 +5,6 @@ import sys
 import Sensitivity.sensitivity as sensitivity
 ##############################
 
-
-NAntOT = 36.
 configDir = '/home/sagonzal/druva/PycharmProjects/MetaData/Sensitivity'
 try:
     asdmUID = sys.argv[1]
@@ -16,6 +14,23 @@ try:
 except Exception as e:
     print e
     sys.exit(1)
+
+c3 = datetime.datetime(2015,10,1,0,0,0)
+c2 = datetime.datetime(2014,6,3,0,0,0)
+c1 = datetime.datetime(2013,10,12,0,0,0)
+
+if asdm.toc >= c3:
+    NAntOT = 36.
+    cycle = 'Cycle 3'
+elif asdm.toc >= c2:
+    NAntOT = 34.
+    cycle = 'Cycle 2'
+elif asdm.toc >= c1:
+    NAntOT = 32.
+    cycle = 'Cycle 1'
+else:
+    NAntOT = 14.
+    cycle = 'Cycle 0'
 
 ############################
 sbUID = sb.values[0][0]
@@ -57,8 +72,8 @@ scan = getScan(asdm.asdmDict['Scan'])
 scan['target'] = scan.apply(lambda x: True if str(x['scanIntent']).find('OBSERVE_TARGET') > 0 else False ,axis = 1)
 scan['delta'] = scan.apply(lambda x:  (gtm2(x['endTime']) - gtm2(x['startTime'])).total_seconds() ,axis = 1)
 
-target = scan[scan['target'] == True]['sourceName'].unique()[0]
-scan['atm'] = scan.apply(lambda x: True if str(x['scanIntent']).find('CALIBRATE_ATMOSPHERE') > 0 and x['sourceName'] == target else False,axis =1 )
+target = list(scan[scan['target'] == True]['sourceName'].unique())
+scan['atm'] = scan.apply(lambda x: True if str(x['scanIntent']).find('CALIBRATE_ATMOSPHERE') > 0 and x['sourceName'] in target else False,axis =1 )
 
 ToSEB = float(scan['delta'][scan['target'] == True].sum())
 
@@ -104,6 +119,7 @@ result = {'TimeOnSource_EB':ToSEB,
 execFrac = ((TsysOT/TsysEB)**2)*((NantEB*(NantEB-1.))/(NAntOT*(NAntOT-1.)))*(ToSEB/ToSOT)
 
 print 'Executional Fraction: ', execFrac
+print cycle
 print 'Details:'
 print result
 
