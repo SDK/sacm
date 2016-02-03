@@ -99,16 +99,29 @@ def getScan(uid=None):
         scanList = list()
         rows = scan.getElementsByTagName('row')
         for i in rows:
-            scanList.append((int(i.getElementsByTagName('scanNumber')[0].firstChild.data),
-                             int(i.getElementsByTagName('startTime')[0].firstChild.data),
-                             int(i.getElementsByTagName('endTime')[0].firstChild.data),
-                             #i.getElementsByTagName('numIntent')[0].firstChild.data,
-                             int(i.getElementsByTagName('numSubscan')[0].firstChild.data),
-                             arrayParser(i.getElementsByTagName('scanIntent')[0].firstChild.data, 1),
-                             arrayParser(i.getElementsByTagName('calDataType')[0].firstChild.data, 1),
-                             int(i.getElementsByTagName('numField')[0].firstChild.data),
-                             i.getElementsByTagName('fieldName')[0].firstChild.data,
-                             i.getElementsByTagName('sourceName')[0].firstChild.data))
+            try:
+                scanList.append((int(i.getElementsByTagName('scanNumber')[0].firstChild.data),
+                                 int(i.getElementsByTagName('startTime')[0].firstChild.data),
+                                 int(i.getElementsByTagName('endTime')[0].firstChild.data),
+                                 #i.getElementsByTagName('numIntent')[0].firstChild.data,
+                                 int(i.getElementsByTagName('numSubscan')[0].firstChild.data),
+                                 arrayParser(i.getElementsByTagName('scanIntent')[0].firstChild.data, 1),
+                                 arrayParser(i.getElementsByTagName('calDataType')[0].firstChild.data, 1),
+                                 int(i.getElementsByTagName('numField')[0].firstChild.data),
+                                 i.getElementsByTagName('fieldName')[0].firstChild.data,
+                                 i.getElementsByTagName('sourceName')[0].firstChild.data))
+            except IndexError as e:
+                scanList.append((int(i.getElementsByTagName('scanNumber')[0].firstChild.data),
+                                 int(i.getElementsByTagName('startTime')[0].firstChild.data),
+                                 int(i.getElementsByTagName('endTime')[0].firstChild.data),
+                                 #i.getElementsByTagName('numIntent')[0].firstChild.data,
+                                 int(i.getElementsByTagName('numSubscan')[0].firstChild.data),
+                                 arrayParser(i.getElementsByTagName('scanIntent')[0].firstChild.data, 1),
+                                 arrayParser(i.getElementsByTagName('calDataType')[0].firstChild.data, 1),
+                                 0,
+                                 "None",
+                                 "None"))
+
 
         return pd.DataFrame(scanList, columns=['scanNumber', 'startTime', 'endTime', 'numSubscan',
                                              'scanIntent', 'calDataType', 'numField', 'fieldName', 'sourceName'])
