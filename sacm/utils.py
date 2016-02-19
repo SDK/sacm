@@ -120,12 +120,12 @@ def RadianTo(num=None, unit=None):
         g = int(Deg)
         m = int((Deg-g)*60.)
         s = (Deg-g-m/60.)*3600.
-        return sign+str(g)+":"+str(m)+":"+str('%5.2f' % s)
+        return sign+str(g)+":"+str(m)+":"+str('%5.5f' % s)
     if unit == 'hms':
         h = int(Deg/15.)
         m = int((Deg/15.-h)*60.)
         s = (Deg/15.-h-m/60.)*3600.
-        return str(h)+":"+str(m)+":"+str('%5.2f' % s)
+        return str(h)+":"+str(m)+":"+str('%5.5f' % s)
 
 
 def arrayParser(line=None, dimensions=None):

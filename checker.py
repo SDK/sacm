@@ -477,6 +477,24 @@ def getSBTargets(sbuid=None):
     target = pd.DataFrame(targetList, columns=['entityPartId', 'InstrumentSpec', 'FieldSource', 'ObsParameter'])
     return target
 
+def getSBOffsets(sbuid=None):
+    schedXML = GetXML(sbuid, 'SchedBlock')
+    sched = minidom.parseString(schedXML)
+    offsetList = list()
+    rows = sched.getElementsByTagName('sbl:phaseCenterCoordinates')
+    for i in rows:
+        offsetList.append((
+            i.parentNode.parentNode.getAttribute('entityPartId'),
+            i.getAttribute('system'),
+            i.getAttribute('type'),
+            i.getElementsByTagName('val:longitude')[0].firstChild.data,
+            i.getElementsByTagName('val:longitude')[0].getAttribute('unit'),
+            i.getElementsByTagName('val:latitude')[0].firstChild.data,
+            i.getElementsByTagName('val:latitude')[0].getAttribute('unit'),
+        ))
+
+    offset = pd.DataFrame(offsetList, columns=['partId','system', 'type', 'longitude','lon_unit', 'latitude','lat_unit'])
+    return offset
 
 def getScienceGoal(prjUID=None):
     projXML = GetXML(prjUID, 'ObsProject')
