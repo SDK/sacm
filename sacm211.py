@@ -28,7 +28,7 @@ parser.asALMA()
 parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
-if len(argv) >= 1:
+if len(argv) == 1:
     asdmdir = 'uid___A002_X9f9284_X175e'
 else:
     asdmdir = argv[1]
