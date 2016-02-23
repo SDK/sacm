@@ -10,7 +10,7 @@ from sys import stdout
 import ephem
 import sacm.geo_helper as gh
 import matplotlib.pyplot as plt
-
+plt.style.use('ggplot')
 
 J0 = ephem.julian_date(0)
 
@@ -28,7 +28,7 @@ parser.asALMA()
 parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
-if argv[1] is None:
+if len(argv) >= 1:
     asdmdir = 'uid___A002_X9f9284_X175e'
 else:
     asdmdir = argv[1]
@@ -117,7 +117,7 @@ groups = final.groupby('series')
 fig, ax = plt.subplots()
 ax.margins(0.05)
 for name, group in groups:
-    ax.plot(group.ra, group.dec, marker='.', linestyle='', ms=12, label=name)
+    ax.plot(group.ra, group.dec, marker='.', linestyle='', ms=12, label=name, alpha=0.7)
 
 ax.legend()
 plt.show()
