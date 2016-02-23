@@ -28,7 +28,11 @@ parser.asALMA()
 parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
-asdmdir= 'uid___A002_X72c4aa_X614'
+if argv[1] is None:
+    asdmdir = 'uid___A002_X9f9284_X175e'
+else:
+    asdmdir = argv[1]
+
 asdmtable.setFromFile(asdmdir, parser)
 uid = asdmtable.entity().toString().split('"')[1]
 asdm = AsdmCheck()
@@ -80,13 +84,14 @@ field['ra'],field['dec'] = zip(*field.apply(lambda x: arrayParser(x['referenceDi
 
 correctedList = list()
 correctedList.append((ra,dec))
-for i in joined[joined['antennaId'] == 'Antenna_2'].rowNum.values:
+for i in joined.query("antennaId == 'Antenna_1' and subscanIntent == 'ON_SOURCE'").rowNum.values:
     row  = rows[i]
-    raOffset,decOffset = [[float(str(p[0]).replace('rad','')),float(str(p[1]).replace('rad',''))] for p in row.sourceOffset() ][0]
+    raOffset,decOffset = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][0]
     correctedList.append((raOffset+ra, decOffset+dec))
 
 corrected = pd.DataFrame(correctedList, columns=['ra','dec'])
 corrected['series'] = 'Corrected'
+corrected = corrected.drop_duplicates()
 observed = field[field['target'] == True][['ra','dec']]
 observed['series'] = 'Observed'
 observed.ra.astype(float)
@@ -113,6 +118,7 @@ fig, ax = plt.subplots()
 ax.margins(0.05)
 for name, group in groups:
     ax.plot(group.ra, group.dec, marker='.', linestyle='', ms=12, label=name)
+
 ax.legend()
 plt.show()
 
