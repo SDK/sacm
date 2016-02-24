@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 import dateutil.parser as prs
 
+pd.options.display.width = 300
 
 J0 = ephem.julian_date(0)
 
@@ -25,17 +26,6 @@ def azelToRaDec(az=None, el=None,lat=None,lon=None,alt=None, ut=None):
     observer.date = ut - J0
     return observer.radec_of(az, el)
 
-def roundTime(dt=None, roundTo=60):
-   """Round a datetime object to any time laps in seconds
-   dt : datetime.datetime object, default now.
-   roundTo : Closest number of seconds to round to, default 1 minute.
-   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
-   """
-   if dt is None : dt = datetime.datetime.now()
-   seconds = (dt - dt.min).seconds
-   # // is a floor division, not a comment on following line:
-   rounding = (seconds+roundTo/2.) // roundTo * roundTo
-   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
 parser = ASDMParseOptions()
 parser.asALMA()
@@ -95,7 +85,7 @@ field['ra'],field['dec'] = zip(*field.apply(lambda x: arrayParser(x['referenceDi
 #TODO: Fix to match any antenna
 
 correctedList = list()
-correctedList.append((ra,dec))
+correctedList.append((ra,dec,0))
 for i in pointing.query('go == True').rowNum.values:
     row  = rows[i]
     raOffset,decOffset = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][row.numSample()/2]
