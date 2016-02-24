@@ -33,7 +33,7 @@ parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
 if len(argv) == 1:
-    asdmdir = 'uid___A002_X9f9284_X175e'
+    asdmdir = 'uid___A002_X72c4aa_X614'
 else:
     asdmdir = argv[1]
 
@@ -73,7 +73,7 @@ field['target'] = field.apply(lambda x: True if str(x['fieldName']).strip() in t
 foo = list(scan.scanNumber[scan['target'] == True])
 pointing['go'] = False
 for i in subscan.loc[subscan['scanNumber'].isin(foo) ][['startTime','endTime']].values:
-    pointing['go'] = pointing.apply(lambda x: True if  gtm2(i[0]) - datetime.timedelta(seconds=1) <= prs.parse(x['origin']) and gtm2(i[1]) >= prs.parse(x['origin']) else x['go'], axis = 1)
+    pointing['go'] = pointing.apply(lambda x: True if  prs.parse(sdmTimeString(i[0])) - datetime.timedelta(seconds=1) <= prs.parse(x['origin']) and prs.parse(sdmTimeString(i[1])) >= prs.parse(x['origin']) else x['go'], axis = 1)
 
 ra = float(source[source['target'] ==True]['ra'].unique()[0])
 dec = float(source[source['target'] ==True]['dec'].unique()[0])
