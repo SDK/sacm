@@ -11,6 +11,8 @@ import ephem
 import sacm.geo_helper as gh
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
+import dateutil.parser as prs
+
 
 J0 = ephem.julian_date(0)
 
@@ -22,6 +24,18 @@ def azelToRaDec(az=None, el=None,lat=None,lon=None,alt=None, ut=None):
     observer.elevation = alt
     observer.date = ut - J0
     return observer.radec_of(az, el)
+
+def roundTime(dt=None, roundTo=60):
+   """Round a datetime object to any time laps in seconds
+   dt : datetime.datetime object, default now.
+   roundTo : Closest number of seconds to round to, default 1 minute.
+   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
+   """
+   if dt is None : dt = datetime.datetime.now()
+   seconds = (dt - dt.min).seconds
+   # // is a floor division, not a comment on following line:
+   rounding = (seconds+roundTo/2.) // roundTo * roundTo
+   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
 parser = ASDMParseOptions()
 parser.asALMA()
@@ -55,8 +69,8 @@ pointingList = list()
 for idx,row in enumerate(rows):
     pointingList.append((idx, str(row.antennaId()), float(row.numSample()), float(row.numTerm()),str(row.timeInterval()), str(row.timeOrigin())))
 
-pointing = pd.DataFrame(pointingList,columns = ['rowNum','antennaId','samples','iter','duration','origin'])
-
+pointingAll = pd.DataFrame(pointingList,columns = ['rowNum','antennaId','samples','iter','duration','origin'])
+pointing = pointingAll[pointingAll['antennaId'] == 'Antenna_1']
 
 #do some transformations for matching the data
 scan['target'] = scan.apply(lambda x: True if str(x['scanIntent']).find('OBSERVE_TARGET') > 0 else False ,axis = 1)
@@ -66,13 +80,11 @@ source['target'] = source.apply(lambda x: True if str(x['sourceName']).strip() i
 source['ra'], source['dec'] = zip(*source.apply(lambda x: arrayParser(x['direction'],1), axis = 1))
 field['target'] = field.apply(lambda x: True if str(x['fieldName']).strip() in targets else False, axis = 1)
 
-pointing['start'] = pointing.apply(lambda x: x['origin'][0:19], axis = 1)
 foo = list(scan.scanNumber[scan['target'] == True])
-mosaic = subscan.loc[subscan['scanNumber'].isin(foo) ]
-mosaic['start'] = mosaic.apply(lambda x: sdmTimeString(x['startTime'])[0:19], axis = 1)
+pointing['go'] = False
+for i in subscan.loc[subscan['scanNumber'].isin(foo) ][['startTime','endTime']].values:
+    pointing['go'] = pointing.apply(lambda x: True if  gtm2(i[0]) - datetime.timedelta(seconds=1) <= prs.parse(x['origin']) and gtm2(i[1]) >= prs.parse(x['origin']) else x['go'], axis = 1)
 
-
-joined = pd.merge(mosaic,pointing,left_on='start',right_on='start',how='inner')
 ra = float(source[source['target'] ==True]['ra'].unique()[0])
 dec = float(source[source['target'] ==True]['dec'].unique()[0])
 geo = pd.merge(antenna,station, left_on='stationId', right_on = 'stationId', how = 'inner')
@@ -84,14 +96,14 @@ field['ra'],field['dec'] = zip(*field.apply(lambda x: arrayParser(x['referenceDi
 
 correctedList = list()
 correctedList.append((ra,dec))
-for i in joined.query("antennaId == 'Antenna_1' and subscanIntent == 'ON_SOURCE'").rowNum.values:
+for i in pointing.query('go == True').rowNum.values:
     row  = rows[i]
-    raOffset,decOffset = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][0]
-    correctedList.append((raOffset+ra, decOffset+dec))
+    raOffset,decOffset = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][row.numSample()/2]
+    correctedList.append((raOffset+ra, decOffset+dec, i))
 
-corrected = pd.DataFrame(correctedList, columns=['ra','dec'])
+correctedAll = pd.DataFrame(correctedList, columns=['ra','dec', 'row'])
+corrected = correctedAll[['ra','dec']]
 corrected['series'] = 'Corrected'
-corrected = corrected.drop_duplicates()
 observed = field[field['target'] == True][['ra','dec']]
 observed['series'] = 'Observed'
 observed.ra.astype(float)
