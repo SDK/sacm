@@ -96,10 +96,10 @@ for i in pointing.query('go == True').rowNum.values:
 
 correctedAll = pd.DataFrame(correctedList, columns=['ra','dec', 'row'])
 corrected = correctedAll[['ra','dec']]
-corrected['series'] = 'Corrected'
+corrected['series'] = 'Corrected (Pointing)'
 observed = field[field['target'] == True][['ra','dec']]
 
-observed['series'] = 'Observed'
+observed['series'] = 'Field.xml'
 observed['ra'] = observed.apply(lambda x: -1*float(x['ra']) if float(x['ra']) < 0 else float(x['ra']), axis = 1)
 observed.ra.astype(float)
 observed.dec.astype(float)
@@ -124,7 +124,7 @@ for i in predicted.values:
     predictedList.append( ( (float(longitude)+float(i[1])/3600.)*np.pi/180. , (float(lat)+float(i[0])/3600.)*np.pi/180))
 
 pred = pd.DataFrame(predictedList, columns = ['ra','dec'])
-pred['series'] = 'predicted'
+pred['series'] = 'SchedBlock'
 
 final = pd.concat([corrected,observed,pred])
 final[['ra','dec']] =  final[['ra','dec']].astype(float)
