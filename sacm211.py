@@ -33,7 +33,7 @@ parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
 if len(argv) == 1:
-    asdmdir = 'uid___A002_X75f169_X1003'
+    asdmdir = 'uid___A002_Xaebbcb_X6ad'
 else:
     asdmdir = argv[1]
 
@@ -121,7 +121,7 @@ predictedList = list()
 predictedList.append((float(longitude)*np.pi/180.,float(lat)*np.pi/180. ))
 
 for i in predicted.values:
-    predictedList.append( ( (float(longitude)+float(i[0])/3600.)*np.pi/180. , (float(lat)+float(i[1])/3600.)*np.pi/180))
+    predictedList.append( ( (float(longitude)+float(i[1])/3600.)*np.pi/180. , (float(lat)+float(i[0])/3600.)*np.pi/180))
 
 pred = pd.DataFrame(predictedList, columns = ['ra','dec'])
 pred['series'] = 'predicted'
