@@ -33,7 +33,7 @@ parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
 if len(argv) == 1:
-    asdmdir = 'uid___A002_X72c4aa_X614'
+    asdmdir = 'uid___A002_X75f169_X1003'
 else:
     asdmdir = argv[1]
 
@@ -51,7 +51,7 @@ antenna = getAntennas(asdm.asdmDict['Antenna'])
 station = getStation(asdm.asdmDict['Station'])
 source = getSource(asdm.asdmDict['Source'])
 sbUID = sb.values[0][0]
-
+sbfield = getSBFields(sbUID)
 
 
 rows = asdmtable.pointingTable().get()
@@ -76,6 +76,9 @@ for i in subscan.loc[subscan['scanNumber'].isin(foo) ][['startTime','endTime']].
     pointing['go'] = pointing.apply(lambda x: True if  prs.parse(sdmTimeString(i[0])) - datetime.timedelta(seconds=1) <= prs.parse(x['origin']) and prs.parse(sdmTimeString(i[1])) >= prs.parse(x['origin']) else x['go'], axis = 1)
 
 ra = float(source[source['target'] ==True]['ra'].unique()[0])
+if ra < 0:
+    ra = ra * -1.
+
 dec = float(source[source['target'] ==True]['dec'].unique()[0])
 geo = pd.merge(antenna,station, left_on='stationId', right_on = 'stationId', how = 'inner')
 geo['pos'] = geo.apply(lambda x: arrayParser(x['position'],1) , axis = 1 )
@@ -95,12 +98,13 @@ correctedAll = pd.DataFrame(correctedList, columns=['ra','dec', 'row'])
 corrected = correctedAll[['ra','dec']]
 corrected['series'] = 'Corrected'
 observed = field[field['target'] == True][['ra','dec']]
+
 observed['series'] = 'Observed'
+observed['ra'] = observed.apply(lambda x: -1*float(x['ra']) if float(x['ra']) < 0 else float(x['ra']), axis = 1)
 observed.ra.astype(float)
 observed.dec.astype(float)
 
-final = pd.concat([corrected,observed])
-final[['ra','dec']] =  final[['ra','dec']].astype(float)
+
 sboffset = getSBOffsets(sbUID)
 sb = getSBSummary(asdm.asdmDict['SBSummary'])
 sbUID = sb.values[0][0]
@@ -111,9 +115,19 @@ science = getSBScience(sbUID)
 partId =  target[target['ObsParameter'] == science.entityPartId.values[0]].FieldSource.values[0]
 
 predicted = sboffset[sboffset['partId'] == partId][['latitude','longitude']]
-
+longitude, lat = sbfield[sbfield['entityPartId'] == partId][['longitude','latitude']].values[0]
 predicted[['latitude','longitude']] = predicted[['latitude','longitude']].astype(float)
+predictedList = list()
+predictedList.append((float(longitude)*np.pi/180.,float(lat)*np.pi/180. ))
 
+for i in predicted.values:
+    predictedList.append( ( (float(longitude)+float(i[0])/3600.)*np.pi/180. , (float(lat)+float(i[1])/3600.)*np.pi/180))
+
+pred = pd.DataFrame(predictedList, columns = ['ra','dec'])
+pred['series'] = 'predicted'
+
+final = pd.concat([corrected,observed,pred])
+final[['ra','dec']] =  final[['ra','dec']].astype(float)
 groups = final.groupby('series')
 
 fig, ax = plt.subplots()
