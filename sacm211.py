@@ -88,14 +88,16 @@ field['target'] = field.apply(lambda x: True if str(x['fieldName']).strip() in t
 
 foo = list(scan.scanNumber[scan['target'] == True])
 pointing['go'] = False
+
+#horrible hack to match the pointing table timescale with the subscan table
 for i in subscan.loc[subscan['scanNumber'].isin(foo) ][['startTime','endTime']].values:
     pointing['go'] = pointing.apply(lambda x: True if  prs.parse(sdmTimeString(i[0])) - datetime.timedelta(seconds=1) <= prs.parse(x['origin']) and prs.parse(sdmTimeString(i[1])) >= prs.parse(x['origin']) else x['go'], axis = 1)
 
 ra = float(source[source['target'] ==True]['ra'].unique()[0])
 if ra < 0:
     ra = ra * -1.
-
 dec = float(source[source['target'] ==True]['dec'].unique()[0])
+
 geo = pd.merge(antenna,station, left_on='stationId', right_on = 'stationId', how = 'inner')
 geo['pos'] = geo.apply(lambda x: arrayParser(x['position'],1) , axis = 1 )
 geo['lat'], geo['lon'], geo['alt'] = zip(*geo.apply(lambda x: gh.turn_xyz_into_llh(float(x.pos[0]),float(x.pos[1]),float(x.pos[2]), 'wgs84'),axis=1))
@@ -106,8 +108,10 @@ correctedList = list()
 correctedList.append((ra,dec,0))
 for i in pointing.query('go == True').rowNum.values:
     row  = rows[i]
-    raOffset,decOffset = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][row.numSample()/2]
-    correctedList.append((raOffset+ra, decOffset+dec, i))
+    dRA,dDec = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][row.numSample()/2]
+    Pl = [pl.cos(dRA)*pl.cos(dDec), pl.sin(dRA)*pl.cos(dDec), pl.sin(dDec)]
+    Ps = rot(Pl, ra, dec)
+    correctedList.append((pl.arctan2(Ps[1], Ps[0]) % (2.*pl.pi),  pl.arcsin(Ps[2]), i))
 
 correctedAll = pd.DataFrame(correctedList, columns=['ra','dec', 'row'])
 corrected = correctedAll[['ra','dec']]
@@ -119,36 +123,34 @@ observed['ra'] = observed.apply(lambda x: -1*float(x['ra']) if float(x['ra']) < 
 observed.ra.astype(float)
 observed.dec.astype(float)
 
-
+#SB Queries and data manipulation
 sboffset = getSBOffsets(sbUID)
 sb = getSBSummary(asdm.asdmDict['SBSummary'])
 sbUID = sb.values[0][0]
-
-
 target = getSBTargets(sbUID)
 science = getSBScience(sbUID)
 partId =  target[target['ObsParameter'] == science.entityPartId.values[0]].FieldSource.values[0]
-
 predicted = sboffset[sboffset['partId'] == partId][['latitude','longitude']]
 longitude, lat = sbfield[sbfield['entityPartId'] == partId][['longitude','latitude']].values[0]
 predicted[['raoff','decoff']] = predicted[['longitude','latitude']].astype(float)
 RA0 = float(longitude)*pl.pi/180.
 Dec0 = float(lat)*pl.pi/180.
-
 predicted['dRA'] = predicted.apply(lambda x: pl.radians(x['raoff']/3600.), axis = 1)
 predicted['dDec'] = predicted.apply(lambda x: pl.radians(x['decoff']/3600.), axis = 1)
 predicted['Pl'] = predicted.apply(lambda x: list((pl.cos(x['dRA'])*pl.cos(x['dDec']), pl.sin(x['dRA'])*pl.cos(x['dDec']), pl.sin(x['dDec']))) , axis = 1)
 predicted['Ps'] = predicted.apply(lambda x: rot(x['Pl'],RA0,Dec0), axis = 1)
 predicted['otcoor'] = predicted.apply(lambda x: list((pl.arctan2(x['Ps'][1], x['Ps'][0]) % (2.*pl.pi), pl.arcsin(x['Ps'][2]))), axis =1)
-
+predicted['otcoor_ra'] = predicted.apply(lambda x: x['otcoor'][0], axis  =1 )
+predicted['otcoor_dec'] = predicted.apply(lambda x: x['otcoor'][1], axis  =1 )
 predictedList = list()
-predictedList.append((float(longitude)*np.pi/180.,float(lat)*np.pi/180. ))
-
-for i in predicted.values:
-    predictedList.append( ( (float(longitude)+float(i[1])/3600.)*np.pi/180. , (float(lat)+float(i[0])/3600.)*np.pi/180))
-
+predictedList.append((RA0,Dec0))
 pred = pd.DataFrame(predictedList, columns = ['ra','dec'])
+ot = predicted[['otcoor_ra','otcoor_dec']]
+ot.columns= ['ra','dec']
+pred = pd.concat([pred,ot])
 pred['series'] = 'SchedBlock'
+
+#Plotting
 
 final = pd.concat([corrected,observed,pred])
 final[['ra','dec']] =  final[['ra','dec']].astype(float)
