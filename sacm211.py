@@ -47,7 +47,7 @@ parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
 if len(argv) == 1:
-    asdmdir = 'uid___A002_Xaebbcb_X6ad'
+    asdmdir = 'uid___A002_X9f9284_X175e'
 else:
     asdmdir = argv[1]
 
@@ -158,8 +158,10 @@ groups = final.groupby('series')
 
 fig, ax = plt.subplots()
 ax.margins(0.05)
-for name, group in groups:
-    ax.plot(group.ra, group.dec, marker='.', linestyle='', ms=12, label=name, alpha=0.7)
+marks = ['.','+','x']
+
+for idx, x in enumerate(groups):
+    ax.plot(x[1].ra, x[1].dec, marker=marks[idx], linestyle='', ms=12, label=x[0], alpha=0.7)
 
 ax.legend()
 plt.show()
