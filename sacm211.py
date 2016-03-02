@@ -15,6 +15,7 @@ import dateutil.parser as prs
 import math
 import pylab as pl
 pd.options.display.width = 300
+from itertools import combinations
 
 J0 = ephem.julian_date(0)
 
@@ -28,7 +29,7 @@ def azelToRaDec(az=None, el=None,lat=None,lon=None,alt=None, ut=None):
     return observer.radec_of(az, el)
 
 def measure(lat1, lon1, lat2, lon2):
-    R = 6378.137 # Radius of earth in KM
+    R = 11378.137 # Radius of earth at Chajnantor aprox. in KM
     dLat = (lat2 - lat1) * np.pi / 180.
     dLon = (lon2 - lon1) * np.pi / 180.
     a = math.sin(dLat/2.) * math.sin(dLat/2.) + math.cos(lat1 * np.pi / 180.) * math.cos(lat2 * np.pi / 180.) * math.sin(dLon/2.) * math.sin(dLon/2.)
@@ -47,7 +48,7 @@ parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
 if len(argv) == 1:
-    asdmdir = 'uid___A002_X9f9284_X175e'
+    asdmdir = 'uid___A002_X71895d_X127'
 else:
     asdmdir = argv[1]
 
@@ -120,8 +121,8 @@ observed = field[field['target'] == True][['ra','dec']]
 
 observed['series'] = 'Field.xml'
 observed['ra'] = observed.apply(lambda x: -1*float(x['ra']) if float(x['ra']) < 0 else float(x['ra']), axis = 1)
-observed.ra.astype(float)
-observed.dec.astype(float)
+observed.ra = observed.ra.astype(float)
+observed.dec = observed.dec.astype(float)
 
 #SB Queries and data manipulation
 sboffset = getSBOffsets(sbUID)
@@ -149,6 +150,38 @@ ot = predicted[['otcoor_ra','otcoor_dec']]
 ot.columns= ['ra','dec']
 pred = pd.concat([pred,ot])
 pred['series'] = 'SchedBlock'
+
+comb = combinations(geo[['lat','lon']].values, 2)
+combList = list()
+for i in comb:
+    combList.append((i[0][0],i[0][1],i[1][0],i[1][1]))
+baseLines = pd.DataFrame(combList)
+baseLines['dist'] = baseLines.apply(lambda x: measure(x[0],x[1],x[2],x[3]) , axis = 1)
+
+blMax = baseLines.dist.describe().values[7]
+sbfreq = np.float(sb.frequency.values[0])*1e9
+c = 299792458
+l = c / sbfreq
+beam = l / blMax
+sbeam = beam * 206264.80624709636
+
+observed = observed.reset_index(drop=True)
+corrected = corrected.reset_index(drop=True)
+diff = pd.concat([observed,corrected] , axis = 1)
+diff.columns = ['ra_field','dec_field','field','ra_pointing','dec_pointing','pointing']
+diff['ra_diff'] = diff.apply(lambda x: pl.absolute(x['ra_field'] - x['ra_pointing']), axis = 1)
+diff['dec_diff'] = diff.apply(lambda x: pl.absolute(x['dec_field'] - x['dec_pointing']), axis = 1)
+
+diff['total'] = diff.apply(lambda x: ((x['ra_diff']**2 + x['dec_diff']**2)**(0.5))*206264.80624709636, axis = 1)
+
+if diff.total.describe().values[7] >= sbeam /5.:
+    print 'Needs New Field Table'
+    print 'Max Offset (arcsec) :',str(diff.total.describe().values[7])
+    print 'Sbeam / 5:', str(sbeam /5.)
+else:
+    print 'Does not need fix'
+    print 'Max Offset (arcsec) :',str(diff.total.describe().values[7])
+    print 'Sbeam / 5:', str(sbeam /5.)
 
 #Plotting
 
