@@ -67,6 +67,7 @@ station = getStation(asdm.asdmDict['Station'])
 source = getSource(asdm.asdmDict['Source'])
 sbUID = sb.values[0][0]
 sbfield = getSBFields(sbUID)
+main = getMain(asdm.asdmDict['Main'])
 
 
 rows = asdmtable.pointingTable().get()
@@ -88,6 +89,8 @@ source['ra'], source['dec'] = zip(*source.apply(lambda x: arrayParser(x['directi
 field['target'] = field.apply(lambda x: True if str(x['fieldName']).strip() in targets else False, axis = 1)
 
 foo = list(scan.scanNumber[scan['target'] == True])
+bar = list(main.loc[main['scanNumber'].isin(foo) ]['fieldId'].unique())
+
 pointing['go'] = False
 
 #horrible hack to match the pointing table timescale with the subscan table
@@ -106,7 +109,7 @@ field['ra'],field['dec'] = zip(*field.apply(lambda x: arrayParser(x['referenceDi
 
 
 correctedList = list()
-correctedList.append((ra,dec,0))
+#correctedList.append((ra,dec,0))
 for i in pointing.query('go == True').rowNum.values:
     row  = rows[i]
     dRA,dDec = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][row.numSample()/2]
@@ -117,7 +120,9 @@ for i in pointing.query('go == True').rowNum.values:
 correctedAll = pd.DataFrame(correctedList, columns=['ra','dec', 'row'])
 corrected = correctedAll[['ra','dec']]
 corrected['series'] = 'Corrected (Pointing)'
-observed = field[field['target'] == True][['ra','dec']]
+observed = field[field['target'] == True][['fieldId','ra','dec']]
+observed = observed.loc[observed['fieldId'].isin(bar) ]
+del observed['fieldId']
 
 observed['series'] = 'Field.xml'
 observed['ra'] = observed.apply(lambda x: -1*float(x['ra']) if float(x['ra']) < 0 else float(x['ra']), axis = 1)
@@ -144,7 +149,7 @@ predicted['otcoor'] = predicted.apply(lambda x: list((pl.arctan2(x['Ps'][1], x['
 predicted['otcoor_ra'] = predicted.apply(lambda x: x['otcoor'][0], axis  =1 )
 predicted['otcoor_dec'] = predicted.apply(lambda x: x['otcoor'][1], axis  =1 )
 predictedList = list()
-predictedList.append((RA0,Dec0))
+#predictedList.append((RA0,Dec0))
 pred = pd.DataFrame(predictedList, columns = ['ra','dec'])
 ot = predicted[['otcoor_ra','otcoor_dec']]
 ot.columns= ['ra','dec']
@@ -166,6 +171,7 @@ beam = l / blMax
 sbeam = beam * 206264.80624709636
 
 observed = observed.reset_index(drop=True)
+corrected = corrected.drop_duplicates()
 corrected = corrected.reset_index(drop=True)
 diff = pd.concat([observed,corrected] , axis = 1)
 diff.columns = ['ra_field','dec_field','field','ra_pointing','dec_pointing','pointing']
