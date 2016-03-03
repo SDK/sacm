@@ -67,7 +67,7 @@ parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
 if len(argv) == 1:
-    asdmdir = 'uid___A002_Xaebbcb_X6ad'
+    asdmdir = 'uid___A002_X7c8369_X64e'
 else:
     asdmdir = argv[1]
 
@@ -101,6 +101,8 @@ pointing = pointingAll[pointingAll['antennaId'] == 'Antenna_1']
 
 #do some transformations for matching the data
 scan['target'] = scan.apply(lambda x: True if str(x['scanIntent']).find('OBSERVE_TARGET') > 0 else False ,axis = 1)
+tsysScans = list(set(scan.sourceName[scan['target'] == True].values))
+scan['target'] = scan.apply(lambda x: True if str(x['sourceName']) in tsysScans else x['target'] ,axis = 1)
 targets = map(unicode.strip,list(scan[scan['target'] == True].sourceName.values))
 
 source['target'] = source.apply(lambda x: True if str(x['sourceName']).strip() in targets else False, axis = 1)
@@ -217,6 +219,10 @@ else:
 
 #Plotting
 
+new = diff[['fieldId','ra_pointing','dec_pointing']]
+newDict = new.set_index('fieldId').T.to_dict('list')
+
+WriteNewField(asdm.asdmDict['Field'],newDict)
 
 final = pd.concat([corrected,observed,pred])
 final[['ra','dec']] =  final[['ra','dec']].astype(float)
