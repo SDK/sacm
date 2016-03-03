@@ -29,8 +29,26 @@ def azelToRaDec(az=None, el=None,lat=None,lon=None,alt=None, ut=None):
     observer.date = ut - J0
     return observer.radec_of(az, el)
 
+def WriteNewField(fielduid=None, df=None):
+    fieldXML = GetXML(fielduid,'Field')
+    if fieldXML is not False:
+        f = minidom.parseString(fieldXML)
+        r = f.getElementsByTagName('row')
+        for i in r:
+            fieldId = unicode(i.getElementsByTagName('fieldId')[0].firstChild.data)
+            try:
+                ra_new, dec_new = df[fieldId]
+                text = ' 2 1 2 %s %s '%(ra_new,dec_new)
+                i.getElementsByTagName('delayDir')[0].firstChild.replaceWholeText(text)
+                i.getElementsByTagName('phaseDir')[0].firstChild.replaceWholeText(text)
+                i.getElementsByTagName('referenceDir')[0].firstChild.replaceWholeText(text)
+            except KeyError as e:
+                pass
+
+        open("Field.xml","wb").write(f.toxml())
+
 def measureDistance(lat1, lon1, lat2, lon2):
-    R = 11378.137 # Radius of earth at Chajnantor aprox. in KM
+    R = 6383.137 # Radius of earth at Chajnantor aprox. in KM
     dLat = (lat2 - lat1) * np.pi / 180.
     dLon = (lon2 - lon1) * np.pi / 180.
     a = pl.sin(dLat/2.) * pl.sin(dLat/2.) + pl.cos(lat1 * np.pi / 180.) * pl.cos(lat2 * np.pi / 180.) * pl.sin(dLon/2.) * pl.sin(dLon/2.)
@@ -49,7 +67,7 @@ parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
 if len(argv) == 1:
-    asdmdir = 'uid___A002_X74deb6_X479'
+    asdmdir = 'uid___A002_Xaebbcb_X6ad'
 else:
     asdmdir = argv[1]
 
@@ -110,7 +128,7 @@ field['ra'],field['dec'] = zip(*field.apply(lambda x: arrayParser(x['referenceDi
 
 
 correctedList = list()
-#correctedList.append((ra,dec,0))
+correctedList.append((ra,dec,0))
 for i in pointing.query('go == True').rowNum.values:
     row  = rows[i]
     dRA,dDec = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][row.numSample()/2]
@@ -133,7 +151,7 @@ cat = SkyCoord(observed.ra.values * u.rad, observed.dec.values * u.rad, frame='i
 cat2 = SkyCoord(corrected.ra.values * u.rad, corrected.dec.values *u.rad, frame='icrs')
 match, separ, dist = cat2.match_to_catalog_sky(cat)
 
-del observed['fieldId']
+observed['fieldId']
 
 observed['series'] = 'Field.xml'
 observed['ra'] = observed.apply(lambda x: -1*float(x['ra']) if float(x['ra']) < 0 else float(x['ra']), axis = 1)
@@ -182,7 +200,7 @@ sbeam = beam * 206264.80624709636
 
 
 diff = pd.concat([observed.ix[match].reset_index(drop=True),corrected] , axis = 1)
-diff.columns = ['ra_field','dec_field','field','ra_pointing','dec_pointing','pointing']
+diff.columns = ['fieldId','ra_field','dec_field','field','ra_pointing','dec_pointing','pointing']
 diff['ra_diff'] = diff.apply(lambda x: pl.absolute(x['ra_field'] - x['ra_pointing']), axis = 1)
 diff['dec_diff'] = diff.apply(lambda x: pl.absolute(x['dec_field'] - x['dec_pointing']), axis = 1)
 
@@ -199,7 +217,6 @@ else:
 
 #Plotting
 
-#def WriteNewField(field):
 
 final = pd.concat([corrected,observed,pred])
 final[['ra','dec']] =  final[['ra','dec']].astype(float)
@@ -208,9 +225,10 @@ groups = final.groupby('series')
 fig, ax = plt.subplots()
 ax.margins(0.05)
 marks = ['.','+','x']
+colors = ['b','r','k']
 
 for idx, x in enumerate(groups):
-    ax.plot(x[1].ra, x[1].dec, marker=marks[idx], linestyle='', ms=12, label=x[0], alpha=0.7)
+    ax.plot(x[1].ra, x[1].dec, marker=marks[idx], color=colors[idx],linestyle='', ms=12, label=x[0], alpha=0.6)
 
 ax.legend()
 plt.show()
