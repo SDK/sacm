@@ -210,10 +210,12 @@ diff['total'] = diff.apply(lambda x: ((x['ra_diff']**2 + x['dec_diff']**2)**(0.5
 
 if diff.total.describe().values[7] >= sbeam /5.:
     print 'Needs New Field Table'
+    print 'Mean Offset (arcsec) :',str(diff.total.describe().values[1])
     print 'Max Offset (arcsec) :',str(diff.total.describe().values[7])
     print 'Sbeam / 5:', str(sbeam /5.)
 else:
     print 'Does not need fix'
+    print 'Mean Offset (arcsec) :',str(diff.total.describe().values[1])
     print 'Max Offset (arcsec) :',str(diff.total.describe().values[7])
     print 'Sbeam / 5:', str(sbeam /5.)
 
