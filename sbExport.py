@@ -16,7 +16,7 @@ sbUID = sys.argv[1]
 if 'uid___' in sbUID:
     sbUID = sbUID.replace('___','://').replace('_','_')
 
-sql = 'select se_eb_uid from ALMA.SHIFTLOG_ENTRIES where SE_SB_ID = "%s" and SE_QA0FLAG = "Pass"'%(sbUID)
+sql = '''select se_eb_uid from ALMA.SHIFTLOG_ENTRIES where SE_SB_ID = "%s" and SE_QA0FLAG = "Pass"'''%sbUID
 
 rows = cursor.execute(sql)
 sbUID_norma = sbUID.replace('://','___').replace('/','_')
