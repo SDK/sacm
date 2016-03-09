@@ -29,7 +29,7 @@ def azelToRaDec(az=None, el=None,lat=None,lon=None,alt=None, ut=None):
     observer.date = ut - J0
     return observer.radec_of(az, el)
 
-def WriteNewField(fielduid=None, df=None):
+def WriteNewField(fielduid = None, dir = None, df = None):
     fieldXML = GetXML(fielduid,'Field')
     if fieldXML is not False:
         f = minidom.parseString(fieldXML)
@@ -45,7 +45,7 @@ def WriteNewField(fielduid=None, df=None):
             except KeyError as e:
                 pass
 
-        open("Field.xml","wb").write(f.toxml())
+        open(dir+"Field.xml.new","wb").write(f.toxml())
 
 def measureDistance(lat1, lon1, lat2, lon2):
     R = 6383.137 # Radius of earth at Chajnantor aprox. in KM
@@ -224,7 +224,7 @@ else:
 new = diff[['fieldId','ra_pointing','dec_pointing']]
 newDict = new.set_index('fieldId').T.to_dict('list')
 
-WriteNewField(asdm.asdmDict['Field'],newDict)
+WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,newDict)
 
 final = pd.concat([corrected,observed,pred])
 final[['ra','dec']] =  final[['ra','dec']].astype(float)

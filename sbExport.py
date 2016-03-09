@@ -4,7 +4,7 @@ import sys
 import os
 import cx_Oracle
 import subprocess
-
+import time
 try:
     conn = cx_Oracle.connect(databaseSCO)
     cursor = conn.cursor()
@@ -27,6 +27,11 @@ if rows > 0:
     os.chdir('SB_'+sbUID_norma)
     for i in rows:
         subprocess.Popen(['asdmExport','-m',i[0]])
+        time.sleep(15)
     os.chdir('../')
+else:
+    print "No EBs detected for this SB uid"
+
+sys.exit(0)
 
 
