@@ -119,8 +119,8 @@ def getScan(uid=None):
                                  arrayParser(i.getElementsByTagName('scanIntent')[0].firstChild.data, 1),
                                  arrayParser(i.getElementsByTagName('calDataType')[0].firstChild.data, 1),
                                  0,
-                                 "None",
-                                 "None"))
+                                 u"None",
+                                 u"None"))
 
 
         return pd.DataFrame(scanList, columns=['scanNumber', 'startTime', 'endTime', 'numSubscan',
