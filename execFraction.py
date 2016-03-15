@@ -6,8 +6,8 @@ import sys
 import Sensitivity.sensitivity as sensitivity
 ##############################
 
-configDir = '/home/sagonzal/druva/PycharmProjects/MetaData/Sensitivity'
-#configDir = '/users/sagonzal/sagonzal/workspace/sacm/Sensitivity'
+#configDir = '/home/sagonzal/druva/PycharmProjects/MetaData/Sensitivity'
+configDir = '/users/sagonzal/sagonzal/workspace/sacm/Sensitivity'
 
 try:
     asdmUID = sys.argv[1]

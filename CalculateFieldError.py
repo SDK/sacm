@@ -73,6 +73,7 @@ for row in df.values:
     field = getField(asdm.asdmDict['Field'])
     source = getSource(asdm.asdmDict['Source'])
     scan = getScan(asdm.asdmDict['Scan'])
+
     scan['target'] = scan.apply(lambda x: True if str(x['scanIntent']).find('OBSERVE_TARGET') > 0 else False ,axis = 1)
     targets = map(unicode.strip,list(scan[scan['target'] == True].sourceName.values))
     field['target'] = field.apply(lambda x: True if str(x['fieldName']).strip() in targets else False, axis = 1)
@@ -87,9 +88,8 @@ for row in df.values:
     diff['total'] = diff.apply(lambda x: posErr(float(x['ra_y']),float(x['dec_y']),float(x['ra_x']),float(x['dec_x'])), axis = 1)
     maxOffset = diff.total.describe()[7]/1000.
     #Check if the SB needs Re-Image
-    if maxOffset > sbeam:
+    if maxOffset > 0.01:
         print uid,sb,project
-        print '10% S.Beam:',str(sbeam)
         print 'Max.Offset error:',str(maxOffset)
     else:
         print '#No problem here', uid,sb,project
