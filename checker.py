@@ -238,14 +238,15 @@ def getField(uid=None):
             fieldList.append((i.getElementsByTagName('fieldId')[0].firstChild.data,
                               i.getElementsByTagName('fieldName')[0].firstChild.data,
                               i.getElementsByTagName('numPoly')[0].firstChild.data,
-                              i.getElementsByTagName('delayDir')[0].firstChild.data,
-                              i.getElementsByTagName('phaseDir')[0].firstChild.data,
+                              #i.getElementsByTagName('delayDir')[0].firstChild.data,
+                              #i.getElementsByTagName('phaseDir')[0].firstChild.data,
                               i.getElementsByTagName('referenceDir')[0].firstChild.data,
                               int(i.getElementsByTagName('time')[0].firstChild.data),
                               i.getElementsByTagName('code')[0].firstChild.data,
                               i.getElementsByTagName('directionCode')[0].firstChild.data,
                               int(i.getElementsByTagName('sourceId')[0].firstChild.data)))
-        return pd.DataFrame(fieldList, columns=['fieldId', 'fieldName', 'numPoly','delayDir','phaseDir','referenceDir', 'time', 'code', 'directionCode', 'sourceId'])
+        #return pd.DataFrame(fieldList, columns=['fieldId', 'fieldName', 'numPoly','delayDir','phaseDir','referenceDir', 'time', 'code', 'directionCode', 'sourceId'])
+        return pd.DataFrame(fieldList, columns=['fieldId', 'fieldName', 'numPoly','referenceDir', 'time', 'code', 'directionCode', 'sourceId'])
     else:
         return False
 
