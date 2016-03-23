@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/bin/env python
 from MetaData import *
 import ASDM
 from asdmTypes import *
