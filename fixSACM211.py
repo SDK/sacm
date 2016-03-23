@@ -40,9 +40,9 @@ def getNewSource(f=None):
 def getNewField(f=None):
     fieldXML = open(f,'r')
     if fieldXML is not False:
-        field = minidom.parseString(fieldXML.read())
+        f = minidom.parseString(fieldXML.read())
         fieldList = list()
-        rows = field.getElementsByTagName('row')
+        rows = f.getElementsByTagName('row')
         for i in rows:
             fieldList.append((i.getElementsByTagName('fieldId')[0].firstChild.data,
                               i.getElementsByTagName('fieldName')[0].firstChild.data,
@@ -66,7 +66,7 @@ def WriteNewSource(sourceuid = None, dir = None, df = None):
         f = minidom.parseString(sourceXML)
         r = f.getElementsByTagName('row')
         for i in r:
-            sourceName = unicode(i.getElementsByTagName('sourceName')[0].firstChild.data)
+            sourceName = unicode(i.getElementsByTagName('sourceName')[0].firstChild.data).strip()
             try:
                 text = str(df[sourceName])
                 i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(text)
@@ -81,17 +81,15 @@ def WriteNewField(fielduid = None, dir = None, fieldDict = None, sourceDict=None
         r = f.getElementsByTagName('row')
         for i in r:
             fieldId = unicode(i.getElementsByTagName('fieldId')[0].firstChild.data)
+            sourceName = unicode(i.getElementsByTagName('fieldName')[0].firstChild.data).strip()
+            sourceId = str(sourceDict[sourceName])
+            i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(sourceId)
             try:
                 ra_new, dec_new = fieldDict[fieldId]
                 text = ' 2 1 2 %s %s '%(ra_new,dec_new)
                 i.getElementsByTagName('delayDir')[0].firstChild.replaceWholeText(text)
                 i.getElementsByTagName('phaseDir')[0].firstChild.replaceWholeText(text)
                 i.getElementsByTagName('referenceDir')[0].firstChild.replaceWholeText(text)
-                sourceName = u' '+unicode(i.getElementsByTagName('fieldName')[0].firstChild.data)+u' '
-                print sourceName
-                sourceId = str(sourceDict[sourceName.strip()])
-
-                i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(sourceId)
             except KeyError as e:
                 pass
 
@@ -239,8 +237,9 @@ print field
 
 doit = raw_input('\n Would you like to rebuild Source Table? (Y/n)')
 if 'Y' in doit or 'y' in doit or len(doit)==0:
-    df = source[['sourceId','sourceName']].drop_duplicates().sourceName.drop_duplicates().reset_index(drop=True)
-    df = dict(zip(df,df.index))
+    df = source[['sourceName']].drop_duplicates().reset_index(drop=True)
+    df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
+    df = dict(zip(df.sourceName.values,df.index))
     WriteNewSource(asdm.asdmDict['Source'],asdmdir,df)
     newSource = getNewSource(asdmdir+'/Source.xml.new')
     print "New Values for Source table"
