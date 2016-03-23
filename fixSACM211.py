@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 from MetaData import *
 import ASDM
 from asdmTypes import *
@@ -17,8 +17,64 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from math import atan2
 
+def getNewSource(f=None):
+    sourceXML = open(f,'r')
+    if sourceXML is not False:
+        source = minidom.parseString(sourceXML.read())
+        sourceList = list()
+        rows = source.getElementsByTagName('row')
+        #there are missing fields in some rows for the Source table.
+        for i in rows:
+            sourceList.append((int(i.getElementsByTagName('sourceId')[0].firstChild.data),
+                               i.getElementsByTagName('timeInterval')[0].firstChild.data,
+                               i.getElementsByTagName('direction')[0].firstChild.data,
+                               i.getElementsByTagName('directionCode')[0].firstChild.data,
+                               i.getElementsByTagName('sourceName')[0].firstChild.data,
+                               i.getElementsByTagName('spectralWindowId')[0].firstChild.data))
+        sourceXML.close()
+        return pd.DataFrame(sourceList,columns=['sourceId','timeInterval','direction','directionCode','sourceName',
+                                                'spectralWindowId'])
+    else:
+        return False
 
-def WriteNewField(fielduid = None, dir = None, df = None):
+def getNewField(f=None):
+    fieldXML = open(f,'r')
+    if fieldXML is not False:
+        field = minidom.parseString(fieldXML.read())
+        fieldList = list()
+        rows = field.getElementsByTagName('row')
+        for i in rows:
+            fieldList.append((i.getElementsByTagName('fieldId')[0].firstChild.data,
+                              i.getElementsByTagName('fieldName')[0].firstChild.data,
+                              i.getElementsByTagName('numPoly')[0].firstChild.data,
+                              #i.getElementsByTagName('delayDir')[0].firstChild.data,
+                              #i.getElementsByTagName('phaseDir')[0].firstChild.data,
+                              i.getElementsByTagName('referenceDir')[0].firstChild.data,
+                              int(i.getElementsByTagName('time')[0].firstChild.data),
+                              i.getElementsByTagName('code')[0].firstChild.data,
+                              i.getElementsByTagName('directionCode')[0].firstChild.data,
+                              int(i.getElementsByTagName('sourceId')[0].firstChild.data)))
+        #return pd.DataFrame(fieldList, columns=['fieldId', 'fieldName', 'numPoly','delayDir','phaseDir','referenceDir', 'time', 'code', 'directionCode', 'sourceId'])
+        fieldXML.close()
+        return pd.DataFrame(fieldList, columns=['fieldId', 'fieldName', 'numPoly','referenceDir', 'time', 'code', 'directionCode', 'sourceId'])
+    else:
+        return False
+
+def WriteNewSource(sourceuid = None, dir = None, df = None):
+    sourceXML = GetXML(sourceuid,'Source')
+    if sourceXML is not False:
+        f = minidom.parseString(sourceXML)
+        r = f.getElementsByTagName('row')
+        for i in r:
+            sourceName = unicode(i.getElementsByTagName('sourceName')[0].firstChild.data)
+            try:
+                text = str(df[sourceName])
+                i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(text)
+            except KeyError as e:
+                pass
+        open(dir+"/Source.xml.new","wb").write(f.toxml())
+
+def WriteNewField(fielduid = None, dir = None, fieldDict = None, sourceDict=None):
     fieldXML = GetXML(fielduid,'Field')
     if fieldXML is not False:
         f = minidom.parseString(fieldXML)
@@ -26,11 +82,16 @@ def WriteNewField(fielduid = None, dir = None, df = None):
         for i in r:
             fieldId = unicode(i.getElementsByTagName('fieldId')[0].firstChild.data)
             try:
-                ra_new, dec_new = df[fieldId]
+                ra_new, dec_new = fieldDict[fieldId]
                 text = ' 2 1 2 %s %s '%(ra_new,dec_new)
                 i.getElementsByTagName('delayDir')[0].firstChild.replaceWholeText(text)
                 i.getElementsByTagName('phaseDir')[0].firstChild.replaceWholeText(text)
                 i.getElementsByTagName('referenceDir')[0].firstChild.replaceWholeText(text)
+                sourceName = u' '+unicode(i.getElementsByTagName('fieldName')[0].firstChild.data)+u' '
+                print sourceName
+                sourceId = str(sourceDict[sourceName.strip()])
+
+                i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(sourceId)
             except KeyError as e:
                 pass
 
@@ -173,14 +234,33 @@ print "The Fields are matching the following Sources"
 print source[source['sourceId'].isin(field.query('target == True').sourceId.unique())][['sourceId','sourceName']].drop_duplicates()
 print "###########################"
 print source[['sourceId','sourceName','ra','dec']].drop_duplicates()
+print "###########################"
+print field
+
+doit = raw_input('\n Would you like to rebuild Source Table? (Y/n)')
+if 'Y' in doit or 'y' in doit or len(doit)==0:
+    df = source[['sourceId','sourceName']].drop_duplicates().sourceName.drop_duplicates().reset_index(drop=True)
+    df = dict(zip(df,df.index))
+    WriteNewSource(asdm.asdmDict['Source'],asdmdir,df)
+    newSource = getNewSource(asdmdir+'/Source.xml.new')
+    print "New Values for Source table"
+    print newSource[['sourceId','sourceName','direction']].drop_duplicates()
+    new = diff[['fieldId','ra_pointing','dec_pointing']]
+    newDict = new.set_index('fieldId').T.to_dict('list')
+    WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
+    print "New Values for Fields Table"
+    newField = getNewField(asdmdir+'/Field.xml.new')
+    print newField
+
 #Plotting
 if observed.ra.describe().values[0] == corrected.ra.describe().values[0]:
     print "The numbers Match, generating new Fields table."
     new = diff[['fieldId','ra_pointing','dec_pointing']]
     newDict = new.set_index('fieldId').T.to_dict('list')
-    WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,newDict)
+    WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
 else:
     print "The Numbers do not match, please check carefuly the plot"
+
 
 final = pd.concat([corrected,observed])
 final[['ra','dec']] =  final[['ra','dec']].astype(float)
@@ -195,4 +275,6 @@ for idx, x in enumerate(groups):
 
 ax.legend()
 plt.show()
+
+
 
