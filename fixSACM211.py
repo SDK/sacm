@@ -5,7 +5,7 @@ from asdmTypes import *
 from ASDM import *
 from Pointing import *
 from ASDMParseOptions import *
-from sys import argv
+import sys
 import sacm.geo_helper as gh
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -114,10 +114,19 @@ parser.asALMA()
 parser.loadTablesOnDemand(True)
 # Read ASDM
 asdmtable = ASDM()
-if len(argv) == 1:
-    asdmdir = 'uid___A002_Xaebbcb_X6ad'
+if len(sys.argv[1]) >= 1:
+    asdmdir = sys.argv[1]
 else:
-    asdmdir = argv[1]
+    asdmdir = 'uid___A002_X826a79_Xcdb'
+
+try:
+    if sys.argv[2] == 'silent':
+        silent = True
+    else:
+        silent = False
+except IndexError as e:
+    silent = False
+    pass
 
 asdmtable.setFromFile(asdmdir, parser)
 uid = asdmtable.entity().toString().split('"')[1]
@@ -171,7 +180,11 @@ correctedList = list()
 correctedList.append((ra,dec,0))
 for i in pointing.query('go == True').rowNum.values:
     row  = rows[i]
-    dRA,dDec = [[float(str(p[0]).replace('rad','').replace(',','.')),float(str(p[1]).replace('rad','').replace(',','.'))] for p in row.sourceOffset() ][row.numSample()/2]
+    dRA,dDec = [[p[0].get(),p[1].get()] for p in row.sourceOffset() ][row.numSample()/2]
+#    if dRA == 0. or dDec == 0.:
+#        print "no Offset positions in the Pointing Table"
+#        print "Is this EB a MultiSource?"
+#        sys.exit(1)
     Pl = [pl.cos(dRA)*pl.cos(dDec), pl.sin(dRA)*pl.cos(dDec), pl.sin(dDec)]
     Ps = rot(Pl, ra, dec)
     correctedList.append((pl.arctan2(Ps[1], Ps[0]) % (2.*pl.pi),  pl.arcsin(Ps[2]), i))
@@ -235,8 +248,29 @@ print source[['sourceId','sourceName','ra','dec']].drop_duplicates()
 print "###########################"
 print field
 
-doit = raw_input('\n Would you like to rebuild Source Table? (Y/n)')
-if 'Y' in doit or 'y' in doit or len(doit)==0:
+
+#Field == Pointing, no fix in Main.xml
+#Field > Pointing, fix in Main.xml, replace the old fieldIds with new ones
+#Field < Pointing , re index new pointings and add them into the list of fields <<< Should NOT HAPPEND!
+
+    #Normal Fix
+if not silent:
+    doit = raw_input('\n Would you like to rebuild Source Table? (Y/n)')
+    if 'Y' in doit or 'y' in doit or len(doit)==0:
+        df = source[['sourceName']].drop_duplicates().reset_index(drop=True)
+        df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
+        df = dict(zip(df.sourceName.values,df.index))
+        WriteNewSource(asdm.asdmDict['Source'],asdmdir,df)
+        newSource = getNewSource(asdmdir+'/Source.xml.new')
+        print "New Values for Source table"
+        print newSource[['sourceId','sourceName','direction']].drop_duplicates()
+        new = diff[['fieldId','ra_pointing','dec_pointing']]
+        newDict = new.set_index('fieldId').T.to_dict('list')
+        WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
+        print "New Values for Fields Table"
+        newField = getNewField(asdmdir+'/Field.xml.new')
+        print newField
+else:
     df = source[['sourceName']].drop_duplicates().reset_index(drop=True)
     df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
     df = dict(zip(df.sourceName.values,df.index))
@@ -251,29 +285,31 @@ if 'Y' in doit or 'y' in doit or len(doit)==0:
     newField = getNewField(asdmdir+'/Field.xml.new')
     print newField
 
-#Plotting
-if observed.ra.describe().values[0] == corrected.ra.describe().values[0]:
-    print "The numbers Match, generating new Fields table."
-    new = diff[['fieldId','ra_pointing','dec_pointing']]
-    newDict = new.set_index('fieldId').T.to_dict('list')
-    WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
-else:
-    print "The Numbers do not match, please check carefuly the plot"
+
 
 
 final = pd.concat([corrected,observed])
 final[['ra','dec']] =  final[['ra','dec']].astype(float)
 groups = final.groupby('series')
 
-fig, ax = plt.subplots()
-ax.margins(0.05)
-marks = ['.','+','x']
-colors = ['b','r','k']
-for idx, x in enumerate(groups):
-    ax.plot(x[1].ra, x[1].dec, marker=marks[idx], color=colors[idx],linestyle='', ms=12, label=x[0], alpha=0.6)
-
-ax.legend()
-plt.show()
+if silent:
+    fig, ax = plt.subplots()
+    ax.margins(0.05)
+    marks = ['.','+','x']
+    colors = ['b','r','k']
+    for idx, x in enumerate(groups):
+        ax.plot(x[1].ra, x[1].dec, marker=marks[idx], color=colors[idx],linestyle='', ms=12, label=x[0], alpha=0.6)
+    ax.legend()
+    plt.savefig(asdmdir+'/'+asdmdir+'.png', bbox_inches='tight')
+else:
+    fig, ax = plt.subplots()
+    ax.margins(0.05)
+    marks = ['.','+','x']
+    colors = ['b','r','k']
+    for idx, x in enumerate(groups):
+        ax.plot(x[1].ra, x[1].dec, marker=marks[idx], color=colors[idx],linestyle='', ms=12, label=x[0], alpha=0.6)
+    ax.legend()
+    plt.show()
 
 
 
