@@ -270,6 +270,13 @@ if not silent:
         print "New Values for Fields Table"
         newField = getNewField(asdmdir+'/Field.xml.new')
         print newField
+    else:
+        new = diff[['fieldId','ra_pointing','dec_pointing']]
+        newDict = new.set_index('fieldId').T.to_dict('list')
+        WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
+        print "New Values for Fields Table"
+        newField = getNewField(asdmdir+'/Field.xml.new')
+        print newField
 else:
     df = source[['sourceName']].drop_duplicates().reset_index(drop=True)
     df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
