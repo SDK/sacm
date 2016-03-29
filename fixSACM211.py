@@ -271,6 +271,9 @@ if not silent:
         newField = getNewField(asdmdir+'/Field.xml.new')
         print newField
     else:
+        df = source[['sourceName','sourceId']].drop_duplicates()
+        df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
+        df = dict(zip(df.sourceName,df.sourceId))
         new = diff[['fieldId','ra_pointing','dec_pointing']]
         newDict = new.set_index('fieldId').T.to_dict('list')
         WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
