@@ -5,6 +5,7 @@ import sacm.geo_helper as gh
 import pylab as pl
 from itertools import combinations
 import pandas as pd
+import sys
 def measureDistance(lat1, lon1, lat2, lon2):
     R = 6383.137 # Radius of earth at Chajnantor aprox. in KM
     dLat = (lat2 - lat1) * np.pi / 180.
@@ -88,11 +89,8 @@ for row in df.values:
     diff['total'] = diff.apply(lambda x: posErr(float(x['ra_y']),float(x['dec_y']),float(x['ra_x']),float(x['dec_x'])), axis = 1)
     maxOffset = diff.total.describe()[7]/1000.
     #Check if the SB needs Re-Image
-    if maxOffset > 0.01:
-        print uid,sb,project
-        print 'Max.Offset error:',str(maxOffset)
-    else:
-        print '#No problem here', uid,sb,project
+    print '|',uid,'|',sb,'|',project,'|',str(maxOffset),'|',sbeam,'|'
+
 
 
 

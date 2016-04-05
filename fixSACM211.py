@@ -86,7 +86,7 @@ def WriteNewField(fielduid = None, dir = None, fieldDict = None, sourceDict=None
             i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(sourceId)
             try:
                 ra_new, dec_new = fieldDict[fieldId]
-                text = ' 2 1 2 %s %s '%(ra_new,dec_new)
+                text = ' 2 1 2 %.16f %.16f '%(ra_new,dec_new)
                 i.getElementsByTagName('delayDir')[0].firstChild.replaceWholeText(text)
                 i.getElementsByTagName('phaseDir')[0].firstChild.replaceWholeText(text)
                 i.getElementsByTagName('referenceDir')[0].firstChild.replaceWholeText(text)
