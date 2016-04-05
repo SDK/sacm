@@ -117,7 +117,7 @@ asdmtable = ASDM()
 if len(sys.argv[1]) >= 1:
     asdmdir = sys.argv[1]
 else:
-    asdmdir = 'uid___A002_X826a79_Xcdb'
+    asdmdir = 'uid___A002_X715a3e_X13b'
 
 try:
     if sys.argv[2] == 'silent':
@@ -158,36 +158,44 @@ tsysScans = list(set(scan.sourceName[scan['target'] == True].values))
 scan['target'] = scan.apply(lambda x: True if str(x['sourceName']) in tsysScans else x['target'] ,axis = 1)
 targets = map(unicode.strip,list(scan[scan['target'] == True].sourceName.values))
 source['target'] = source.apply(lambda x: True if str(x['sourceName']).strip() in targets else False, axis = 1)
+subscan['target'] = subscan.apply(lambda x: True if str(x['fieldName']).strip() in targets else False, axis = 1)
 source['ra'], source['dec'] = zip(*source.apply(lambda x: arrayParser(x['direction'],1), axis = 1))
 field['target'] = field.apply(lambda x: True if str(x['fieldName']).strip() in targets else False, axis = 1)
-foo = list(scan.scanNumber[scan['target'] == True])
-bar = list(main.loc[main['scanNumber'].isin(foo) ]['fieldId'].unique())
+
+list_of_targets = source[source['target'] ==True][['sourceName','ra','dec']].drop_duplicates()
+g = pd.merge(subscan,list_of_targets, left_on = 'fieldName', right_on= 'sourceName', how = 'inner')
 pointing['go'] = False
-
-#horrible hack to match the pointing table timescale with the subscan table
-for i in subscan.loc[subscan['scanNumber'].isin(foo) ][['startTime','endTime']].values:
-    pointing['go'] = pointing.apply(lambda x: True if  prs.parse(sdmTimeString(i[0])) - datetime.timedelta(seconds=1) <= prs.parse(x['origin']) and prs.parse(sdmTimeString(i[1])) >= prs.parse(x['origin']) else x['go'], axis = 1)
-
-ra = float(source[source['target'] ==True]['ra'].unique()[0])
-if ra < 0:
-    ra = ra * -1.
-dec = float(source[source['target'] ==True]['dec'].unique()[0])
-
 field['ra'],field['dec'] = zip(*field.apply(lambda x: arrayParser(x['referenceDir'],2)[0], axis = 1))
-
-
+field['ra'] = field['ra'].astype(float)
+field['dec'] = field['dec'].astype(float)
+field['ra']  = field.apply(lambda x: 2*pl.pi + x['ra'] if x['ra'] < 0 else x['ra'], axis = 1)
 correctedList = list()
-correctedList.append((ra,dec,0))
-for i in pointing.query('go == True').rowNum.values:
-    row  = rows[i]
-    dRA,dDec = [[p[0].get(),p[1].get()] for p in row.sourceOffset() ][row.numSample()/2]
-#    if dRA == 0. or dDec == 0.:
-#        print "no Offset positions in the Pointing Table"
-#        print "Is this EB a MultiSource?"
-#        sys.exit(1)
-    Pl = [pl.cos(dRA)*pl.cos(dDec), pl.sin(dRA)*pl.cos(dDec), pl.sin(dDec)]
-    Ps = rot(Pl, ra, dec)
-    correctedList.append((pl.arctan2(Ps[1], Ps[0]) % (2.*pl.pi),  pl.arcsin(Ps[2]), i))
+fullbar = list()
+for name, groups in g.groupby('sourceName'):
+    foo = list(groups.scanNumber[groups['target'] == True])
+    print foo
+    bar = list(main.loc[main['scanNumber'].isin(foo) ]['fieldId'].unique())
+    for i in bar:
+        fullbar.append(i)
+    for i in subscan.loc[subscan['scanNumber'].isin(foo) ][['startTime','endTime']].values:
+            pointing['go'] = pointing.apply(lambda x: name if  prs.parse(sdmTimeString(i[0])) - datetime.timedelta(seconds=1) <= prs.parse(x['origin']) and prs.parse(sdmTimeString(i[1])) >= prs.parse(x['origin']) else x['go'], axis = 1)
+
+    ra = float(groups[groups['target'] ==True]['ra'].unique()[0])
+    if ra < 0:
+        ra = ra * -1.
+    dec = float(groups[groups['target'] ==True]['dec'].unique()[0])
+
+    correctedList.append((ra,dec,0))
+    for i in pointing.query('go == "%s"'%name).rowNum.values:
+        row  = rows[i]
+        dRA,dDec = [[p[0].get(),p[1].get()] for p in row.sourceOffset() ][row.numSample()/2]
+    #    if dRA == 0. or dDec == 0.:
+    #        print "no Offset positions in the Pointing Table"
+    #        print "Is this EB a MultiSource?"
+    #        sys.exit(1)
+        Pl = [pl.cos(dRA)*pl.cos(dDec), pl.sin(dRA)*pl.cos(dDec), pl.sin(dDec)]
+        Ps = rot(Pl, ra, dec)
+        correctedList.append((pl.arctan2(Ps[1], Ps[0]) % (2.*pl.pi),  pl.arcsin(Ps[2]), i))
 
 correctedAll = pd.DataFrame(correctedList, columns=['ra','dec', 'row'])
 corrected = correctedAll[['ra','dec']]
@@ -199,7 +207,7 @@ observed = field[field['target'] == True][['fieldId','ra','dec']]
 observed.ra = observed.ra.astype(float)
 observed.dec = observed.dec.astype(float)
 observed['ra'] = observed.apply(lambda x: x['ra']*-1. if x['ra'] < 0.0 else x['ra'], axis = 1)
-observed = observed.loc[observed['fieldId'].isin(bar) ]
+observed = observed.loc[observed['fieldId'].isin(fullbar) ]
 observed = observed.reset_index(drop=True)
 observed['series'] = 'Field.xml'
 
