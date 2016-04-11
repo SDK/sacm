@@ -17,7 +17,7 @@ except Exception as e:
 
 def checkDB(uid=None,cursor=None):
     sql = "select * from alma.xml_updates where asdm_uid = '%s' and elaboration like 'SACM-211'"%uid
-    print sql
+    #print sql
     try:
         cursor.execute(sql)
     except Exception as e:
@@ -31,8 +31,12 @@ def checkDB(uid=None,cursor=None):
 
 image = pd.read_csv('releaseImage.txt',sep='|')
 image['updated'] = image.apply(lambda x: checkDB(x['EB'], cursor) , axis = 1)
-df = image[['CODE','SB','EB','updated']]
 
+arcs = pd.read_csv('arcs.csv',sep = ' ', header= None)
+arcs.columns = ['all']
+arcs['code'],arcs['arc'] = zip(*arcs.apply(lambda x: x['all'].split('\t') , axis = 1 ))
+df = pd.merge(image,arcs,left_on='CODE',right_on='code',how='inner')
+df1 = df[['CODE','arc','SB','EB','updated']]
 to_html = open('sacm211.html','w')
-to_html.write('<html><head></head><body>'+df.to_html(index=False,escape=False)+'</body></html>')
+to_html.write('<html><head></head><body>'+df1.to_html(index=False,escape=False)+'</body></html>')
 to_html.close()
