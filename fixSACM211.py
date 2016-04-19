@@ -67,8 +67,9 @@ def WriteNewSource(sourceuid = None, dir = None, df = None):
         r = f.getElementsByTagName('row')
         for i in r:
             sourceName = unicode(i.getElementsByTagName('sourceName')[0].firstChild.data).strip()
+            direction = unicode(i.getElementsByTagName('direction')[0].firstChild.data).strip()
             try:
-                text = str(df[sourceName])
+                text = str(df[(sourceName,direction)])
                 i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(text)
             except KeyError as e:
                 pass
@@ -82,7 +83,14 @@ def WriteNewField(fielduid = None, dir = None, fieldDict = None, sourceDict=None
         for i in r:
             fieldId = unicode(i.getElementsByTagName('fieldId')[0].firstChild.data)
             sourceName = unicode(i.getElementsByTagName('fieldName')[0].firstChild.data).strip()
-            sourceId = str(sourceDict[sourceName])
+            referenceDir = unicode(i.getElementsByTagName('referenceDir')[0].firstChild.data).strip()
+            try:
+                sourceId = str(sourceDict[(sourceName,referenceDir[2:])])
+            except KeyError as e:
+                newDict = dict()
+                for key, value in sourceDict.iteritems():
+                    newDict[key[0]] = value
+                sourceId = str(newDict[sourceName])
             i.getElementsByTagName('sourceId')[0].firstChild.replaceWholeText(sourceId)
             try:
                 ra_new, dec_new = fieldDict[fieldId]
@@ -117,7 +125,7 @@ asdmtable = ASDM()
 if len(sys.argv[1]) >= 1:
     asdmdir = sys.argv[1]
 else:
-    asdmdir = 'uid___A002_X715a3e_X13b'
+    asdmdir = 'uid___A002_X826a79_Xcdb'
 
 try:
     if sys.argv[2] == 'silent':
@@ -265,40 +273,43 @@ print field
 if not silent:
     doit = raw_input('\n Would you like to rebuild Source Table? (Y/n)')
     if 'Y' in doit or 'y' in doit or len(doit)==0:
-        df = source[['sourceName']].drop_duplicates().reset_index(drop=True)
+        df = source[['sourceName','direction']].drop_duplicates().reset_index(drop=True)
         df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
-        df = dict(zip(df.sourceName.values,df.index))
-        WriteNewSource(asdm.asdmDict['Source'],asdmdir,df)
+        df['direction'] = df.apply(lambda x: unicode(x['direction']).strip(), axis = 1)
+        sourceDict = dict(zip(zip(df.sourceName.values, df.direction.values),df.index))
+        WriteNewSource(asdm.asdmDict['Source'],asdmdir,sourceDict)
         newSource = getNewSource(asdmdir+'/Source.xml.new')
         print "New Values for Source table"
         print newSource[['sourceId','sourceName','direction']].drop_duplicates()
         new = diff[['fieldId','ra_pointing','dec_pointing']]
         newDict = new.set_index('fieldId').T.to_dict('list')
-        WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
+        WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=sourceDict)
         print "New Values for Fields Table"
         newField = getNewField(asdmdir+'/Field.xml.new')
         print newField
     else:
-        df = source[['sourceName','sourceId']].drop_duplicates()
+        df = source[['sourceName','direction']].drop_duplicates().reset_index(drop=True)
         df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
-        df = dict(zip(df.sourceName,df.sourceId))
+        df['direction'] = df.apply(lambda x: unicode(x['direction']).strip(), axis = 1)
+        sourceDict = dict(zip(zip(df.sourceName.values, df.direction.values),df.index))
         new = diff[['fieldId','ra_pointing','dec_pointing']]
         newDict = new.set_index('fieldId').T.to_dict('list')
-        WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
+        WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=sourceDict)
         print "New Values for Fields Table"
         newField = getNewField(asdmdir+'/Field.xml.new')
         print newField
 else:
-    df = source[['sourceName']].drop_duplicates().reset_index(drop=True)
+    df = source[['sourceName','direction']].drop_duplicates().reset_index(drop=True)
     df['sourceName'] = df.apply(lambda x: unicode(x['sourceName']).strip(), axis = 1)
-    df = dict(zip(df.sourceName.values,df.index))
-    WriteNewSource(asdm.asdmDict['Source'],asdmdir,df)
+    df['direction'] = df.apply(lambda x: unicode(x['direction']).strip(), axis = 1)
+    sourceDict = dict(zip(zip(df.sourceName.values, df.direction.values),df.index))
+    WriteNewSource(asdm.asdmDict['Source'],asdmdir,sourceDict)
     newSource = getNewSource(asdmdir+'/Source.xml.new')
     print "New Values for Source table"
     print newSource[['sourceId','sourceName','direction']].drop_duplicates()
     new = diff[['fieldId','ra_pointing','dec_pointing']]
     newDict = new.set_index('fieldId').T.to_dict('list')
-    WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=df)
+    WriteNewField(asdm.asdmDict['Field'] ,asdmdir ,fieldDict=newDict, sourceDict=sourceDict)
     print "New Values for Fields Table"
     newField = getNewField(asdmdir+'/Field.xml.new')
     print newField
