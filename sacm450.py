@@ -52,7 +52,7 @@ for i in rows:
     df = source[['spectralWindowId','target']].query('target == True')
     df1 = pd.merge(spw,df,left_on='spectralWindowId', right_on='spectralWindowId', how = 'inner')
     df1['freqStart'] = df1.apply(lambda x: float(x['chanFreqStart'])/1e9, axis = 1 )
-    df1['freqEnd'] = df1.apply(lambda x: (float(x['chanFreqStart']) + float(x['totBandwidth']))/1e9 , axis = 1 )
+    df1['freqEnd'] = df1.apply(lambda x: (float(x['chanFreqStart']) + float(x['chanFreqStep'])*float(x['numChan']) )/1e9 , axis = 1 )
     df1['centerFreq'] = df1.apply(lambda x: (x['freqStart'] + x['freqEnd'] )/2. , axis = 1 )
     df1['referenceFreq'] = df1.apply(lambda x: float(x['refFreq'])/1e9 , axis = 1 )
     text += df1[['spectralWindowId','basebandName','netSideband','numChan','referenceFreq','freqStart','freqEnd','centerFreq']].drop_duplicates().to_html()
