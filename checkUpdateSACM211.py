@@ -58,3 +58,4 @@ df1 = df[['code','sb','uid','updated']]
 to_html = open('sacm211-all.html','w')
 to_html.write('<html><head></head><body>'+df1.to_html(index=False,escape=False)+'</body></html>')
 to_html.close()
+
